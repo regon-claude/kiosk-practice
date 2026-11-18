@@ -1,0 +1,1626 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>키오스크 연습실</title>
+<style>
+:root{
+  --scale:1;
+  --ink:#1d1d1f; --muted:#62626a; --line:#e4dfd7; --bg:#f3efe8; --card:#ffffff;
+  --brand:#ff7a00; --brand-soft:#fff1e3; --ok:#1f9d55; --bad:#d64545;
+}
+*{box-sizing:border-box}
+html{font-size:calc(16px * var(--scale))}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Malgun Gothic','맑은 고딕','Apple SD Gothic Neo','Noto Sans KR',system-ui,sans-serif;
+  line-height:1.5;-webkit-font-smoothing:antialiased;word-break:keep-all}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+h1,h2,h3,p{margin:0}
+
+/* ---------- 공통 버튼 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;padding:.7em 1.2em;border-radius:14px;
+  font-weight:700;background:#fff;border:2px solid var(--line);transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.dark{background:#2b2b30;border-color:#2b2b30;color:#fff}
+.btn.big{padding:.9em 1.6em;font-size:1.1rem}
+
+/* ---------- 홈 ---------- */
+.home{max-width:980px;margin:0 auto;padding:28px 16px 48px}
+.hero{display:flex;gap:20px;align-items:center;background:linear-gradient(135deg,#ff8a1f,#ff5e3a);color:#fff;
+  border-radius:28px;padding:28px 28px;box-shadow:0 12px 30px rgba(255,100,40,.25)}
+.hero .ico{font-size:4rem;line-height:1}
+.hero h1{font-size:2.2rem;letter-spacing:-.02em}
+.hero p{font-size:1.1rem;opacity:.95;margin-top:4px}
+.sec{background:var(--card);border-radius:22px;padding:22px;margin-top:18px;border:1px solid var(--line)}
+.sec h2{font-size:1.25rem;margin-bottom:14px;display:flex;align-items:center;gap:.5em}
+.sec h2 .n{display:inline-grid;place-items:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--brand);color:#fff;font-size:.85em}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row .lbl{min-width:7em;font-weight:700}
+.seg{display:inline-flex;background:#f1ece5;border-radius:14px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{padding:.55em 1em;border-radius:11px;font-weight:700;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.stores{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.store small{display:block}
+.store{display:flex;gap:14px;align-items:center;text-align:left;padding:16px;border-radius:18px;border:3px solid var(--line);background:#fff}
+.store .e{font-size:2.6rem}
+.store b{font-size:1.2rem;display:block}
+.store small{color:var(--muted)}
+.store.on{border-color:var(--brand);background:var(--brand-soft)}
+.missions{display:grid;gap:12px}
+.mcard{display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;padding:16px 18px;border-radius:18px;border:2px solid var(--line)}
+.lv{display:inline-block;padding:.2em .7em;border-radius:99px;font-size:.85rem;font-weight:800}
+.lv1{background:#e3f6ea;color:#17834a}.lv2{background:#fff3d6;color:#a86a00}.lv3{background:#fde4e4;color:#b42d2d}
+.mcard h3{font-size:1.15rem;margin:4px 0 2px}
+.mcard p{color:var(--muted);font-size:.95rem}
+.mcard .best{font-size:.9rem;color:var(--muted);margin-top:4px}
+.mcard .acts{display:flex;flex-direction:column;gap:8px}
+.mnum{font-size:1.6rem;font-weight:900;color:#c9c1b5;width:1.4em;text-align:center}
+.how{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.how div{background:#faf7f2;border-radius:16px;padding:16px}
+.how b{display:block;font-size:1.05rem;margin-bottom:4px}
+.how p{color:var(--muted);font-size:.95rem}
+.foot{text-align:center;color:var(--muted);font-size:.85rem;margin-top:24px}
+
+/* ---------- 플레이 레이아웃 ---------- */
+.play{display:flex;gap:24px;justify-content:center;align-items:flex-start;padding:16px}
+.kiosk{flex:0 0 auto;width:min(500px,100%);height:clamp(660px,calc(100vh - 32px),940px);background:#26262b;border-radius:30px;padding:14px 14px 22px;
+  box-shadow:0 20px 50px rgba(0,0,0,.25),inset 0 0 0 2px #3a3a40;position:relative}
+.kiosk:after{content:'';position:absolute;left:50%;bottom:7px;transform:translateX(-50%);width:60px;height:6px;border-radius:3px;background:#3d3d44}
+.kscreen{position:relative;height:100%;background:var(--kbg);border-radius:18px;overflow:hidden;display:flex;flex-direction:column}
+.panel{flex:0 1 400px;min-width:300px;display:flex;flex-direction:column;gap:14px;position:sticky;top:16px}
+@media (max-width:920px){
+  .play{flex-direction:column;align-items:center}
+  .panel{position:static;width:min(500px,100%);flex:none;min-width:0}
+  .kiosk{height:min(860px,calc(100vh - 24px))}
+}
+
+/* ---------- 패널 ---------- */
+.ptop{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.mode-badge{padding:.35em .9em;border-radius:99px;font-weight:800;font-size:.9rem}
+.mode-badge.practice{background:#e3f6ea;color:#17834a}
+.mode-badge.real{background:#fde4e4;color:#b42d2d}
+.pcard{background:#fff;border-radius:20px;padding:18px;border:1px solid var(--line)}
+.pcard h2{font-size:1.2rem;margin:6px 0 4px}
+.pcard .story{color:var(--muted);font-size:.95rem;margin-bottom:10px}
+.check{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.check li{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:12px;background:#f7f4ef;font-weight:600}
+.check li .b{flex:none;width:1.5em;height:1.5em;border-radius:50%;border:2px solid #c9c1b5;display:grid;place-items:center;font-size:.8em;color:#fff;margin-top:.1em}
+.check li.done{background:#e8f7ee;color:#17834a}
+.check li.done .b{background:var(--ok);border-color:var(--ok)}
+.guide{background:#2b2b30;color:#fff;border-radius:20px;padding:18px;position:relative}
+.guide .who{display:flex;align-items:center;gap:8px;font-weight:800;color:#ffcf8a;margin-bottom:6px}
+.guide .who .face{font-size:1.6rem}
+.guide p.msg{font-size:1.2rem;font-weight:700;line-height:1.55}
+.guide .why{margin-top:8px;color:#d6d6dc;font-size:.95rem}
+.guide .nudge{background:#d64545;color:#fff;border-radius:10px;padding:6px 10px;font-weight:700;margin-bottom:8px;font-size:.95rem}
+.guide .say{margin-top:12px;background:#45454d;color:#fff;border-radius:12px;padding:.5em .9em;font-weight:700}
+.guide.shake{animation:shake .4s}
+.guide.hidden-help{background:#fff;color:var(--ink);border:2px dashed #d9d2c7}
+.guide.hidden-help .who{color:var(--muted)}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:#fff;border-radius:16px;padding:12px;border:1px solid var(--line);text-align:center}
+.stats span{display:block;color:var(--muted);font-size:.85rem}
+.stats b{font-size:1.4rem}
+.queue{background:#fff7ec;border:1px solid #f3dcbc;border-radius:16px;padding:12px 14px;font-size:.95rem}
+.queue .ppl{font-size:1.6rem;letter-spacing:2px;min-height:1.6em}
+.pact{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- 키오스크 내부 ---------- */
+.k-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;background:var(--kpri);color:#fff;flex:none}
+.k-home{background:rgba(255,255,255,.18);border-radius:10px;padding:.35em .7em;font-weight:700;font-size:.9rem}
+.k-logo{font-weight:900;font-size:1.15rem;letter-spacing:-.02em}
+.k-dine{background:#fff;color:var(--kpri);border-radius:10px;padding:.35em .7em;font-weight:800;font-size:.9rem}
+.k-body{flex:1;overflow:auto;position:relative}
+.k-start{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;
+  background:linear-gradient(180deg,var(--kpri),var(--kpri2));color:#fff;gap:10px}
+.k-start .art{font-size:5.2rem;line-height:1.1}
+.k-start h1{font-size:2.6rem;letter-spacing:-.03em}
+.k-start p{font-size:1.15rem;opacity:.9}
+.k-start .go{margin-top:28px;background:var(--kacc);color:#222;font-weight:900;font-size:1.3rem;padding:1em 1.4em;border-radius:20px;box-shadow:0 8px 0 rgba(0,0,0,.2)}
+.k-start .langs{margin-top:22px;display:flex;gap:6px;opacity:.75;font-size:.85rem}
+.k-start .langs span{border:1px solid rgba(255,255,255,.5);border-radius:99px;padding:.15em .7em}
+.k-title{font-size:1.5rem;font-weight:900;text-align:center;padding:26px 16px 6px;letter-spacing:-.02em}
+.k-sub{text-align:center;color:var(--muted);padding:0 16px 16px}
+.k-where{display:grid;gap:14px;padding:12px 20px}
+.k-where button{background:#fff;border:3px solid var(--line);border-radius:22px;padding:28px 12px;font-size:1.4rem;font-weight:900;display:flex;flex-direction:column;align-items:center;gap:6px}
+.k-where button .e{font-size:3.4rem}
+.k-tabs{display:flex;gap:4px;padding:8px 8px 0;background:#fff;border-bottom:2px solid var(--line);flex:none;overflow-x:auto}
+.k-tabs button{flex:1;padding:.7em .4em;font-weight:800;border-radius:12px 12px 0 0;color:var(--muted);white-space:nowrap}
+.k-tabs button.on{background:var(--kpri);color:#fff}
+.k-grid{flex:1;overflow:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px;align-content:start}
+body.big .k-grid{grid-template-columns:repeat(2,1fr)}
+.k-item{position:relative;background:#fff;border-radius:16px;padding:10px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;border:2px solid transparent;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.k-item .e{font-size:2.6rem;line-height:1.2}
+.k-item b{font-size:.95rem;line-height:1.25;text-align:center}
+.k-item span{font-size:.85rem;color:var(--muted)}
+.k-item .tag{position:absolute;top:6px;left:6px;background:var(--kacc);color:#222;font-size:.68rem;font-weight:900;padding:.1em .45em;border-radius:6px}
+.k-item .e.combo,.k-choice .e.combo,.k-sheet-head .e.combo{font-size:1.6rem;letter-spacing:-.15em;line-height:1.6}
+.k-multi{color:var(--kpri);font-weight:700;font-size:.9rem;margin:-4px 0 10px}
+.k-item.sold{opacity:.55}
+.k-item.sold:before{content:'품절';position:absolute;top:0;right:0;bottom:0;left:0;display:grid;place-items:center;font-weight:900;font-size:1.2rem;color:#fff;background:rgba(0,0,0,.45);border-radius:14px}
+.k-cart{flex:none;background:#fff;border-top:3px solid var(--kpri);display:flex;flex-direction:column;max-height:42%}
+.k-cart-list{overflow:auto;padding:6px 10px;min-height:56px}
+.k-cart .empty{color:var(--muted);text-align:center;padding:10px;font-size:.95rem}
+.k-line{display:grid;grid-template-columns:1fr auto auto auto;gap:6px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line)}
+.k-line .nm{font-weight:800;font-size:.95rem;line-height:1.3}
+.k-line .nm small{display:block;font-weight:500;color:var(--muted);font-size:.8rem}
+.k-line .q{display:flex;align-items:center;gap:4px}
+.k-line .q button{width:1.9em;height:1.9em;border-radius:8px;background:#f0ebe4;font-weight:900;font-size:1rem}
+.k-line .q span{min-width:1.3em;text-align:center;font-weight:800}
+.k-line .pr{font-weight:700;font-size:.9rem;min-width:4.5em;text-align:right}
+.k-line .del{width:1.9em;height:1.9em;border-radius:8px;background:#fde4e4;color:#b42d2d;font-weight:900}
+.k-cart-foot{display:flex;align-items:center;gap:10px;padding:10px;background:#faf7f2}
+.k-cart-foot .sum{flex:1;font-size:.95rem}
+.k-cart-foot .sum b{display:block;font-size:1.25rem}
+.k-pay{background:var(--kpri);color:#fff;font-weight:900;font-size:1.15rem;padding:.8em 1.3em;border-radius:14px}
+.k-pay.off{background:#bdb6ac}
+.k-modal{position:absolute;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;z-index:20}
+.k-modal.center{align-items:center;padding:20px}
+.k-sheet{background:#fff;width:100%;border-radius:22px 22px 0 0;padding:16px;max-height:92%;overflow:auto;position:relative}
+.k-modal.center .k-sheet{border-radius:22px;text-align:center}
+.k-sheet .close{position:absolute;top:10px;right:10px;width:2.2em;height:2.2em;border-radius:50%;background:#f0ebe4;font-weight:900}
+.k-sheet-head{display:flex;gap:12px;align-items:center;margin-bottom:10px;padding-right:40px}
+.k-sheet-head .e{font-size:2.6rem}
+.k-sheet-head b{font-size:1.15rem;display:block}
+.k-sheet-head small{color:var(--muted)}
+.k-steps{display:flex;gap:4px;margin-bottom:12px}
+.k-steps i{flex:1;height:5px;border-radius:3px;background:#e9e3da}
+.k-steps i.on{background:var(--kpri)}
+.k-sheet h3{font-size:1.2rem;margin-bottom:10px}
+.k-choices{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.k-choice{border:3px solid var(--line);border-radius:16px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;position:relative}
+.k-choice .e{font-size:1.9rem;line-height:1.2}
+.k-choice b{font-size:1rem}
+.k-choice small{color:var(--muted);font-size:.8rem}
+.k-choice.on{border-color:var(--kpri);background:var(--ksoft)}
+.k-choice.on:after{content:'✓';position:absolute;top:6px;right:8px;width:1.4em;height:1.4em;border-radius:50%;background:var(--kpri);color:#fff;font-weight:900;display:grid;place-items:center;font-size:.8rem}
+.k-sheet-foot{display:flex;gap:8px;align-items:center;margin-top:14px}
+.k-sheet-foot .price{flex:1;text-align:center;font-weight:900;font-size:1.1rem}
+.k-b{padding:.75em 1.1em;border-radius:14px;font-weight:800;background:#f0ebe4}
+.k-b.pri{background:var(--kpri);color:#fff}
+.k-b.wide{width:100%;margin-top:10px;padding:.9em}
+.k-foot{display:flex;gap:8px;padding:12px;background:#fff;border-top:1px solid var(--line);flex:none}
+.k-foot .k-b{flex:1;font-size:1.1rem;padding:.9em}
+.k-foot .k-b.pri{flex:2}
+.k-confirm{padding:4px 18px 18px}
+.k-tagline{display:inline-block;background:var(--ksoft);color:var(--kpri);font-weight:800;border-radius:99px;padding:.2em .9em;margin-bottom:8px}
+.k-list{background:#fff;border-radius:16px;padding:6px 14px;border:1px solid var(--line)}
+.k-list .ln{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.k-list .ln:last-child{border-bottom:0}
+.k-list .ln small{display:block;color:var(--muted);font-size:.85rem}
+.k-total{display:flex;justify-content:space-between;font-size:1.3rem;font-weight:900;padding:14px 4px}
+.k-choice-col{display:grid;gap:12px;padding:8px 20px}
+.k-choice-col button{background:#fff;border:3px solid var(--line);border-radius:20px;padding:20px;font-size:1.25rem;font-weight:900;display:flex;align-items:center;gap:14px;text-align:left}
+.k-choice-col button .e{font-size:2.4rem}
+.k-choice-col button small{display:block;font-weight:500;color:var(--muted);font-size:.85rem}
+.k-choice-col button.dim{opacity:.6}
+.k-phone{margin:6px 20px 12px;background:#fff;border:3px solid var(--kpri);border-radius:16px;text-align:center;font-size:1.8rem;font-weight:900;letter-spacing:.06em;padding:12px;font-variant-numeric:tabular-nums}
+.k-phone .rest{color:#c9c1b5}
+.k-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 20px}
+.k-pad button{background:#fff;border:2px solid var(--line);border-radius:14px;padding:.6em 0;font-size:1.6rem;font-weight:900}
+.k-pad button.fn{font-size:1rem;background:#f0ebe4}
+.k-cardzone{display:flex;flex-direction:column;align-items:center;gap:26px;padding:20px}
+.k-slot{width:78%;height:46px;border-radius:12px;background:#2b2b30;position:relative;display:grid;place-items:center;color:#9a9aa3;font-size:.85rem;font-weight:700}
+.k-slot:before{content:'';position:absolute;left:12%;right:12%;top:50%;height:6px;margin-top:-3px;border-radius:3px;background:#000}
+.k-slot span{position:absolute;bottom:-1.6em;color:var(--muted)}
+.k-card{width:190px;height:120px;border-radius:14px;background:linear-gradient(135deg,#3a6ff7,#173ea8);color:#fff;position:relative;box-shadow:0 10px 20px rgba(0,0,0,.25);text-align:left;padding:12px 14px;font-weight:800}
+.k-card .chip{position:absolute;left:16px;top:42px;width:34px;height:26px;border-radius:5px;background:linear-gradient(135deg,#f7d774,#c9a227)}
+.k-card .no{position:absolute;bottom:12px;left:14px;font-size:.8rem;letter-spacing:.1em;opacity:.85}
+.k-card.in{animation:cardin 1s forwards}
+@keyframes cardin{to{transform:translateY(-70px) scale(.9);opacity:.2}}
+.k-card.out{animation:cardout 1.2s ease-in-out infinite alternate}
+@keyframes cardout{from{transform:translateY(-40px)}to{transform:translateY(-10px)}}
+.k-phonepay{width:150px;height:240px;border-radius:26px;background:#1d1d1f;padding:10px;box-shadow:0 10px 20px rgba(0,0,0,.25)}
+.k-phonepay div{height:100%;border-radius:18px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-weight:800;color:#333;font-size:.85rem}
+.k-barcode{width:80%;height:56px;background:repeating-linear-gradient(90deg,#111 0 2px,#fff 2px 4px,#111 4px 7px,#fff 7px 9px)}
+.k-scanner{width:70%;height:30px;border-radius:10px;background:#2b2b30;position:relative;overflow:hidden}
+.k-scanner:after{content:'';position:absolute;left:10%;right:10%;top:50%;height:4px;margin-top:-2px;background:#ff3b3b;box-shadow:0 0 12px #ff3b3b}
+.k-wait{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center}
+.spin{width:70px;height:70px;border-radius:50%;border:8px solid #e9e3da;border-top-color:var(--kpri);animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.k-wait h2{font-size:1.5rem}
+.k-wait p{color:var(--bad);font-weight:800;font-size:1.1rem}
+.k-done{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:20px;text-align:center}
+.k-done .ok{font-size:4rem}
+.k-done .num{background:var(--ksoft);border-radius:20px;padding:14px 30px}
+.k-done .num b{display:block;font-size:3.4rem;color:var(--kpri);line-height:1.1}
+.k-done .rc{display:flex;gap:8px;width:100%;margin-top:14px}
+.k-done .rc .k-b{flex:1;font-size:1.1rem;padding:.9em}
+.k-toast{position:absolute;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(20,20,22,.92);color:#fff;padding:.7em 1.1em;border-radius:14px;font-weight:700;z-index:40;width:max-content;max-width:88%;text-align:center;pointer-events:none;animation:pop .2s}
+@keyframes pop{from{opacity:0;transform:translate(-50%,8px)}}
+
+/* ---------- 손가락 안내 ---------- */
+.hl{outline:4px solid #ff9500 !important;outline-offset:2px;animation:pulse 1.3s infinite;z-index:5}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,149,0,.75)}70%{box-shadow:0 0 0 16px rgba(255,149,0,0)}100%{box-shadow:0 0 0 0 rgba(255,149,0,0)}}
+.finger{position:absolute;z-index:50;font-size:46px;line-height:1;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));transform:translateX(-50%);display:none}
+.finger.down{animation:tapd .9s infinite}
+.finger.up{animation:tapu .9s infinite}
+@keyframes tapd{50%{margin-top:8px}}
+@keyframes tapu{50%{margin-top:-8px}}
+
+/* ---------- 시작 안내 오버레이 ---------- */
+.intro{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(20,18,15,.6);display:grid;place-items:center;padding:16px;z-index:100;overflow:auto}
+.intro-box{background:#fff;border-radius:26px;max-width:560px;width:100%;padding:26px}
+.intro-box h2{font-size:1.6rem;margin:8px 0 6px}
+.intro-box .story{color:var(--muted);font-size:1.05rem;margin-bottom:14px}
+.intro-box .modeinfo{background:#faf7f2;border-radius:16px;padding:14px 16px;margin:14px 0;font-size:.98rem}
+.intro-box .modeinfo b{display:block;margin-bottom:4px}
+.intro-box .acts{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+/* ---------- 결과 ---------- */
+.result{max-width:720px;margin:0 auto;padding:28px 16px 48px}
+.rbox{background:#fff;border-radius:26px;padding:28px;border:1px solid var(--line);text-align:center}
+.rbox .stars{font-size:3rem;letter-spacing:6px}
+.rbox .stars .off{filter:grayscale(1);opacity:.3}
+.rbox h1{font-size:1.9rem;margin:6px 0}
+.rbox .lead{color:var(--muted);font-size:1.05rem}
+.rstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:20px 0}
+.rstats div{background:#faf7f2;border-radius:16px;padding:14px}
+.rstats span{display:block;color:var(--muted);font-size:.9rem}
+.rstats b{font-size:1.6rem}
+.errs{text-align:left;background:#fdeeee;border-radius:16px;padding:14px 18px;margin:10px 0}
+.errs b{color:var(--bad)}
+.errs ul{margin:6px 0 0;padding-left:1.2em}
+.tipbox{text-align:left;background:#eef6ff;border-radius:16px;padding:14px 18px;margin:10px 0;color:#1d4f8a}
+.hist{text-align:left;margin-top:18px}
+.hist h3{font-size:1.05rem;margin-bottom:8px}
+.hist table{width:100%;border-collapse:collapse;font-size:.95rem}
+.hist td,.hist th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+.hist th{color:var(--muted);font-weight:700}
+.racts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+
+@media (max-width:640px){
+  .stores,.how{grid-template-columns:1fr}
+  .mcard{grid-template-columns:1fr}
+  .mnum{display:none}
+  .mcard .acts{flex-direction:row}
+  .hero{flex-direction:column;text-align:center}
+  .hero h1{font-size:1.8rem}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div style="max-width:560px;margin:40px auto;padding:24px;font-family:-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:16px;line-height:1.6;color:#1f2328;background:#fff;border:1px solid #d9dde3;border-radius:10px">
+    <h1 style="font-size:22px;margin:0 0 10px">키오스크 연습실</h1>
+    <p style="margin:0 0 12px"><b>프로그램이 아직 실행되지 않았습니다.</b></p>
+    <p style="margin:0 0 12px">아이폰·아이패드의 <b>파일</b> 앱이나 메신저에서 파일을 눌러 열면 <b>미리보기</b>로만 열립니다. 미리보기에서는 프로그램(자바스크립트)이 작동하지 않아서 이 안내만 보입니다.</p>
+    <p style="margin:0 0 6px"><b>이렇게 열어 주세요</b></p>
+    <ol style="margin:0;padding-left:20px">
+      <li style="margin-bottom:6px"><b>컴퓨터</b>: 파일을 더블클릭하면 크롬·엣지·사파리에서 바로 실행됩니다.</li>
+      <li style="margin-bottom:6px"><b>아이폰·아이패드</b>: 파일을 인터넷에 올린 주소(예: GitHub Pages, Netlify Drop)를 <b>Safari</b>에서 열면 실행됩니다.</li>
+    </ol>
+    <p style="margin:12px 0 0;font-size:13px;color:#5f6670">브라우저에서 열었는데도 이 화면이 보이면, 브라우저 설정에서 JavaScript가 켜져 있는지 확인해 주세요.</p>
+  </div>
+</div>
+<script>
+// 첫 화면을 그리기 전에 오류가 나면 흰 화면 대신 오류 내용을 보여 줌 (오래된 브라우저 확인용)
+window.onerror = function (msg, src, line) {
+  if (window.__kioskReady) return;
+  var app = document.getElementById('app');
+  if (!app) return;
+  var text = String(msg).replace(/</g, '&lt;');
+  app.innerHTML = '<div style="max-width:560px;margin:40px auto;padding:24px;font-family:sans-serif;line-height:1.6;background:#fff;border:1px solid #e7a9a4;border-radius:10px">' +
+    '<h1 style="font-size:20px;margin:0 0 10px">프로그램을 시작하지 못했습니다</h1>' +
+    '<p style="margin:0 0 10px">사용 중인 브라우저가 너무 오래되었을 수 있습니다. 기기의 소프트웨어(iOS)를 업데이트하거나 다른 브라우저로 열어 주세요.</p>' +
+    '<p style="margin:0;font-size:13px;color:#666">오류 내용: ' + text + ' (' + line + '번째 줄)</p></div>';
+};
+</script>
+
+<script>
+'use strict';
+
+/* =========================================================
+   1. 데이터: 가게, 메뉴, 옵션, 미션
+   ========================================================= */
+// 버거 재료 추가: 여러 개를 고를 수 있음(multi). 값은 '+'로 이은 문자열, 아무것도 없으면 ''
+const TOPPING = {key:'top', multi:true, def:'', title:'재료를 추가하시겠어요?',
+  why:'재료 추가는 여러 개 고를 수 있어요. 필요 없으면 아무것도 누르지 않고 넘어가면 돼요.',
+  choices:[{id:'cheese',name:'치즈 추가',emoji:'🧀',price:500},
+           {id:'bacon',name:'베이컨 추가',emoji:'🥓',price:800},
+           {id:'egg',name:'계란 추가',emoji:'🍳',price:700},
+           {id:'patty',name:'패티 추가',emoji:'🥩',price:1500}]};
+const SIDE = {key:'side', title:'사이드를 바꾸시겠어요?', def:'fries', why:'세트에는 감자튀김이 기본으로 들어 있어요. 돈을 더 내면 다른 것으로 바꿀 수 있어요.',
+  choices:[{id:'fries',name:'감자튀김',emoji:'🍟',desc:'기본'},
+           {id:'cstick',name:'치즈스틱',emoji:'🧀',price:500},
+           {id:'nugget',name:'치킨너겟',emoji:'🍗',price:700},
+           {id:'cfries',name:'양념감자',emoji:'🍟',price:400}]};
+const DRINK = {key:'drink', title:'음료를 바꾸시겠어요?', def:'cola', why:'세트에는 콜라가 기본으로 들어 있어요. 다른 음료로 바꿀 수 있어요.',
+  choices:[{id:'cola',name:'콜라',emoji:'🥤',desc:'기본'},
+           {id:'cider',name:'사이다',emoji:'🥤'},
+           {id:'zero',name:'제로콜라',emoji:'🥤'},
+           {id:'ojuice',name:'오렌지주스',emoji:'🧃',price:500}]};
+const SINGLE_OPTS = [TOPPING];
+const SET_OPTS = [TOPPING, SIDE, DRINK];
+const SET_EXTRA = 2000; // 세트 = 단품 + 2,000원
+const TEMP = {key:'temp', title:'따뜻하게 드릴까요, 차갑게 드릴까요?', why:'HOT은 따뜻한 음료, ICE는 얼음이 들어간 차가운 음료예요.',
+  choices:[{id:'hot',name:'따뜻하게',short:'따뜻하게(HOT)',emoji:'🔥',desc:'HOT'},
+           {id:'ice',name:'차갑게',short:'차갑게(ICE)',emoji:'🧊',desc:'ICE'}]};
+const SIZE = {key:'size', title:'컵 크기를 골라주세요', def:'regular',
+  choices:[{id:'regular',name:'보통',short:'보통 크기',emoji:'🥛',desc:'레귤러'},
+           {id:'large',name:'크게',short:'큰 크기',emoji:'🥤',desc:'라지',price:500}]};
+const SHOT = {key:'shot', title:'커피를 더 진하게 할까요?', def:'base', why:'"샷 추가"는 커피 원액을 한 번 더 넣어서 진하게 만드는 거예요.',
+  choices:[{id:'base',name:'기본',short:'',emoji:'☕',desc:'그대로'},
+           {id:'extra',name:'샷 추가',short:'샷 추가',emoji:'☕☕',desc:'더 진하게',price:500}]};
+
+/* ---------- 푸드코트 옵션 ---------- */
+const SAUCE = {key:'sauce', title:'소스를 어떻게 드릴까요?', def:'pour', why:'소스를 따로 받으면 튀김이 눅눅해지지 않아요.',
+  choices:[{id:'pour',name:'소스 부어서',short:'',emoji:'🥘',desc:'기본'},
+           {id:'side',name:'소스 따로',short:'소스 따로',emoji:'🥣',desc:'바삭하게'}]};
+const KATSU_ADD = {key:'kadd', multi:true, def:'', title:'추가할 것이 있으세요?',
+  why:'여러 개 고를 수 있어요. 필요 없으면 아무것도 누르지 않고 넘어가면 돼요.',
+  choices:[{id:'rice',name:'공기밥 추가',emoji:'🍚',price:1000},
+           {id:'udon',name:'미니우동 추가',emoji:'🍜',price:2500},
+           {id:'cheese',name:'치즈 추가',emoji:'🧀',price:1500}]};
+const AMOUNT = {key:'amount', title:'양을 골라주세요', def:'normal', why:'곱빼기는 국수를 더 많이 담아 주는 거예요.',
+  choices:[{id:'normal',name:'보통',short:'',emoji:'🍜',desc:'기본'},
+           {id:'double',name:'곱빼기',short:'곱빼기',emoji:'🍜🍜',desc:'양 많이',price:1000}]};
+const SPICY = {key:'spicy', title:'맵기를 골라주세요', def:'mid', why:'맵기는 "보통맛"으로 미리 골라져 있는 경우가 많아요. 매운 걸 못 드시면 꼭 바꾸세요.',
+  choices:[{id:'mild',name:'순한맛',short:'순한맛',emoji:'🙂'},
+           {id:'mid',name:'보통맛',short:'보통맛',emoji:'😋',desc:'기본'},
+           {id:'hot',name:'매운맛',short:'매운맛',emoji:'🥵'}]};
+const RICE = {key:'rice', title:'밥 양을 골라주세요', def:'normal', why:'밥 양은 돈을 더 내지 않고 고를 수 있어요.',
+  choices:[{id:'less',name:'밥 적게',short:'밥 적게',emoji:'🍚',desc:'조금만'},
+           {id:'normal',name:'밥 보통',short:'',emoji:'🍚',desc:'기본'},
+           {id:'more',name:'밥 많이',short:'밥 많이',emoji:'🍚🍚',desc:'무료'}]};
+const BOWL = {key:'bowl', title:'그릇을 골라주세요', def:'normal', why:'돌솥은 뜨거운 돌그릇에 담아서 누룽지가 생겨요.',
+  choices:[{id:'normal',name:'일반 그릇',short:'',emoji:'🥣',desc:'기본'},
+           {id:'stone',name:'돌솥',short:'돌솥',emoji:'🍲',price:1000}]};
+const RAMEN_ADD = {key:'radd', multi:true, def:'', title:'토핑을 추가하시겠어요?',
+  why:'여러 개 고를 수 있어요. 필요 없으면 아무것도 누르지 않고 넘어가면 돼요.',
+  choices:[{id:'egg',name:'계란 추가',emoji:'🥚',price:500},
+           {id:'tteok',name:'떡 추가',emoji:'🍡',price:500},
+           {id:'cheese',name:'치즈 추가',emoji:'🧀',price:700}]};
+
+const STORES = {
+  foodcourt:{
+    id:'foodcourt', name:'한마당 푸드코트', logo:'🍱', slogan:'여러 가게 음식을 한 번에 주문해요', art:'🍜🍱🍛',
+    desc:'돈까스 · 국수 · 한식 · 분식을 한 번에',
+    pickup:'음식마다 만드는 가게가 달라요. 각 가게 앞 화면에 번호가 뜨면 가서 받아 가세요.',
+    theme:{pri:'#2a7d4f', pri2:'#1b5535', acc:'#ffd166', soft:'#e5f3ea', bg:'#f6faf7'},
+    cats:[{id:'katsu',name:'돈까스'},{id:'noodle',name:'국수'},{id:'hansik',name:'한식'},{id:'bunsik',name:'분식'},{id:'drink',name:'음료'}],
+    upsell:{after:['katsu','hansik'], title:'시원한 음료도 함께 하시겠어요?', items:['sikhye','water']},
+    items:[
+      {id:'loin',cat:'katsu',name:'등심돈까스',price:9000,emoji:'🍛',tag:'인기',opts:[SAUCE,KATSU_ADD]},
+      {id:'cheesekatsu',cat:'katsu',name:'치즈돈까스',price:10500,emoji:'🧀',opts:[SAUCE,KATSU_ADD]},
+      {id:'fish',cat:'katsu',name:'생선까스',price:9500,emoji:'🐟',opts:[SAUCE,KATSU_ADD]},
+      {id:'kingkatsu',cat:'katsu',name:'왕돈까스',price:12000,emoji:'🍛',soldOut:true,opts:[SAUCE,KATSU_ADD]},
+      {id:'janchi',cat:'noodle',name:'잔치국수',price:6000,emoji:'🍜',tag:'인기',opts:[AMOUNT]},
+      {id:'bibimnoodle',cat:'noodle',name:'비빔국수',price:7000,emoji:'🍝',opts:[AMOUNT,SPICY]},
+      {id:'kalguksu',cat:'noodle',name:'칼국수',price:7500,emoji:'🍜',opts:[AMOUNT]},
+      {id:'naengmyeon',cat:'noodle',name:'물냉면',price:8000,emoji:'🥶',opts:[AMOUNT]},
+      {id:'bibimnaeng',cat:'noodle',name:'비빔냉면',price:8500,emoji:'🍝',soldOut:true,opts:[AMOUNT,SPICY]},
+      {id:'doenjang',cat:'hansik',name:'된장찌개 정식',price:8500,emoji:'🍲',tag:'인기',opts:[RICE]},
+      {id:'kimchistew',cat:'hansik',name:'김치찌개 정식',price:8500,emoji:'🥘',opts:[RICE,SPICY]},
+      {id:'bulgogiset',cat:'hansik',name:'불고기 정식',price:10000,emoji:'🍱',opts:[RICE]},
+      {id:'bibimbap',cat:'hansik',name:'비빔밥',price:8000,emoji:'🥗',opts:[BOWL]},
+      {id:'gimbap',cat:'bunsik',name:'김밥',price:3500,emoji:'🍙'},
+      {id:'tteokbokki',cat:'bunsik',name:'떡볶이',price:5000,emoji:'🌶️',opts:[SPICY]},
+      {id:'ramen',cat:'bunsik',name:'라면',price:4500,emoji:'🍜',opts:[RAMEN_ADD]},
+      {id:'sundae',cat:'bunsik',name:'순대',price:5000,emoji:'🌭'},
+      {id:'sikhye',cat:'drink',name:'식혜',price:2500,emoji:'🥛'},
+      {id:'fccola',cat:'drink',name:'콜라',price:2000,emoji:'🥤'},
+      {id:'fccider',cat:'drink',name:'사이다',price:2000,emoji:'🥤'},
+      {id:'water',cat:'drink',name:'생수',price:1000,emoji:'💧'}
+    ]
+  },
+  burger:{
+    id:'burger', name:'든든버거', logo:'🍔', slogan:'든든하게 한 끼!', art:'🍔🍟🥤',
+    desc:'햄버거 가게 · 세트/단품 · 재료 추가 연습',
+    pickup:'화면에 번호가 나오면 카운터에서 받아 가세요.',
+    theme:{pri:'#d62828', pri2:'#9d1717', acc:'#ffc43d', soft:'#fdeaea', bg:'#fff8ef'},
+    cats:[{id:'rec',name:'추천'},{id:'set',name:'세트'},{id:'single',name:'단품'},{id:'side',name:'사이드'},{id:'drink',name:'음료'},{id:'dessert',name:'디저트'}],
+    featured:['bulgogi_set','chicken_set','shrimp','chicken','icecream','cfries'],
+    upsell:{after:['set','single'], title:'디저트도 함께 드시겠어요?', items:['icecream','pie']},
+    items:[
+      {id:'bulgogi_set',cat:'set',name:'불고기버거 세트',price:5200+SET_EXTRA,emoji:'🍔🍟🥤',combo:true,tag:'인기',opts:SET_OPTS},
+      {id:'cheese_set',cat:'set',name:'치즈버거 세트',price:4800+SET_EXTRA,emoji:'🍔🍟🥤',combo:true,opts:SET_OPTS},
+      {id:'shrimp_set',cat:'set',name:'새우버거 세트',price:5500+SET_EXTRA,emoji:'🍤🍟🥤',combo:true,opts:SET_OPTS},
+      {id:'chicken_set',cat:'set',name:'치킨버거 세트',price:5900+SET_EXTRA,emoji:'🍗🍟🥤',combo:true,tag:'신메뉴',opts:SET_OPTS},
+      {id:'double_set',cat:'set',name:'더블불고기버거 세트',price:7400+SET_EXTRA,emoji:'🍔🍟🥤',combo:true,soldOut:true,opts:SET_OPTS},
+      {id:'bulgogi',cat:'single',name:'불고기버거',price:5200,emoji:'🍔',tag:'인기',setId:'bulgogi_set',opts:SINGLE_OPTS},
+      {id:'cheese',cat:'single',name:'치즈버거',price:4800,emoji:'🍔',setId:'cheese_set',opts:SINGLE_OPTS},
+      {id:'shrimp',cat:'single',name:'새우버거',price:5500,emoji:'🍤',setId:'shrimp_set',opts:SINGLE_OPTS},
+      {id:'chicken',cat:'single',name:'치킨버거',price:5900,emoji:'🍗',tag:'신메뉴',setId:'chicken_set',opts:SINGLE_OPTS},
+      {id:'double',cat:'single',name:'더블불고기버거',price:7400,emoji:'🍔',soldOut:true,setId:'double_set',opts:SINGLE_OPTS},
+      {id:'fries',cat:'side',name:'감자튀김',price:2300,emoji:'🍟'},
+      {id:'cfries',cat:'side',name:'양념감자',price:2700,emoji:'🍟',tag:'NEW'},
+      {id:'nugget',cat:'side',name:'치킨너겟',price:2800,emoji:'🍗'},
+      {id:'cstick',cat:'side',name:'치즈스틱',price:2500,emoji:'🧀'},
+      {id:'cola',cat:'drink',name:'콜라',price:2000,emoji:'🥤'},
+      {id:'cider',cat:'drink',name:'사이다',price:2000,emoji:'🥤'},
+      {id:'zero',cat:'drink',name:'제로콜라',price:2000,emoji:'🥤'},
+      {id:'ojuice',cat:'drink',name:'오렌지주스',price:2500,emoji:'🧃'},
+      {id:'icecream',cat:'dessert',name:'소프트콘',price:1200,emoji:'🍦'},
+      {id:'pie',cat:'dessert',name:'애플파이',price:1800,emoji:'🥧'}
+    ]
+  },
+  cafe:{
+    id:'cafe', name:'온기카페', logo:'☕', slogan:'따뜻한 한 잔의 여유', art:'☕🍰🥐',
+    desc:'카페 · 음료 옵션 연습',
+    pickup:'진동벨이 울리거나 번호가 나오면 픽업대에서 받아 가세요.',
+    theme:{pri:'#6f4e37', pri2:'#46301f', acc:'#f0c66e', soft:'#f4ebe2', bg:'#fbf7f2'},
+    cats:[{id:'coffee',name:'커피'},{id:'bev',name:'음료'},{id:'dessert',name:'디저트'}],
+    upsell:{after:['coffee'], title:'디저트와 함께 하시겠어요?', items:['cookie','croissant']},
+    items:[
+      {id:'americano',cat:'coffee',name:'아메리카노',price:3000,emoji:'☕',tag:'인기',opts:[TEMP,SIZE,SHOT]},
+      {id:'latte',cat:'coffee',name:'카페라떼',price:3500,emoji:'☕',opts:[TEMP,SIZE,SHOT]},
+      {id:'vanilla',cat:'coffee',name:'바닐라라떼',price:4000,emoji:'☕',opts:[TEMP,SIZE,SHOT]},
+      {id:'caramel',cat:'coffee',name:'카라멜마키아토',price:4300,emoji:'☕',soldOut:true,opts:[TEMP,SIZE,SHOT]},
+      {id:'greentea',cat:'bev',name:'녹차라떼',price:4000,emoji:'🍵',opts:[TEMP,SIZE]},
+      {id:'lemonade',cat:'bev',name:'레몬에이드',price:4200,emoji:'🍋',tag:'ICE',opts:[SIZE]},
+      {id:'smoothie',cat:'bev',name:'딸기스무디',price:4500,emoji:'🍓',tag:'ICE',opts:[SIZE]},
+      {id:'choco',cat:'bev',name:'핫초코',price:3800,emoji:'🍫',tag:'HOT',opts:[SIZE]},
+      {id:'cheesecake',cat:'dessert',name:'치즈케이크',price:5000,emoji:'🍰'},
+      {id:'croissant',cat:'dessert',name:'크루아상',price:3200,emoji:'🥐'},
+      {id:'cookie',cat:'dessert',name:'초코쿠키',price:2000,emoji:'🍪'},
+      {id:'sandwich',cat:'dessert',name:'햄치즈샌드위치',price:5500,emoji:'🥪'}
+    ]
+  }
+};
+
+const PHONE = '01012345678';
+// 가게마다 쉬움 2 · 보통 2 · 어려움 2
+const MISSIONS = [
+  /* ---------- 푸드코트 ---------- */
+  {id:'f1', store:'foodcourt', level:1, title:'잔치국수 한 그릇',
+   story:'점심으로 따뜻한 잔치국수 한 그릇을 먹고 갈 거예요. 양은 보통이면 돼요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'janchi',opts:{},qty:1}]},
+  {id:'f2', store:'foodcourt', level:1, title:'김밥 두 줄 포장',
+   story:'집에 가져갈 김밥 두 줄을 포장해요.',
+   dine:'out', pay:'card', phone:null, lines:[{item:'gimbap',opts:{},qty:2}]},
+  {id:'f3', store:'foodcourt', level:2, title:'된장찌개 정식과 식혜',
+   story:'된장찌개 정식을 먹고 갈 거예요. 밥은 적게 주시고, 시원한 식혜도 한 잔 같이 시켜요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'doenjang',opts:{rice:'less'},qty:1},{item:'sikhye',opts:{},qty:1}]},
+  {id:'f4', store:'foodcourt', level:2, title:'순한 비빔국수 곱빼기',
+   story:'배가 많이 고파요. 비빔국수를 곱빼기로, 매운 걸 잘 못 먹어서 순한맛으로 먹고 갈 거예요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'bibimnoodle',opts:{amount:'double',spicy:'mild'},qty:1}]},
+  {id:'f5', store:'foodcourt', level:3, title:'두 가게에서 한 번에',
+   story:'친구와 매장에서 먹어요. 등심돈까스(소스는 따로, 공기밥 추가) 1개와 잔치국수 1개를 한 번에 주문하고, 포인트를 적립한 뒤 휴대폰 간편결제로 계산해요.',
+   dine:'in', pay:'pay', phone:PHONE, lines:[{item:'loin',opts:{sauce:'side',kadd:'rice'},qty:1},{item:'janchi',opts:{},qty:1}]},
+  {id:'f6', store:'foodcourt', level:3, title:'손주와 푸드코트 외식',
+   story:'손주와 매장에서 먹어요. 떡볶이는 순한맛, 라면은 계란을 추가하고, 불고기 정식은 밥을 많이 달라고 해요. 포인트를 적립하고 카드로 계산해요.',
+   dine:'in', pay:'card', phone:PHONE, lines:[{item:'tteokbokki',opts:{spicy:'mild'},qty:1},{item:'ramen',opts:{radd:'egg'},qty:1},{item:'bulgogiset',opts:{rice:'more'},qty:1}]},
+
+  /* ---------- 든든버거 ---------- */
+  {id:'b1', store:'burger', level:1, title:'불고기버거 하나 사기',
+   story:'출출해요. 가게 안에서 불고기버거 단품 하나만 먹고 갈 거예요. 재료 추가는 필요 없어요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'bulgogi',opts:{},qty:1}]},
+  {id:'b2', store:'burger', level:1, title:'감자튀김과 콜라',
+   story:'간식으로 감자튀김 하나와 콜라 한 잔을 포장해 가요.',
+   dine:'out', pay:'card', phone:null, lines:[{item:'fries',opts:{},qty:1},{item:'cola',opts:{},qty:1}]},
+  {id:'b3', store:'burger', level:2, title:'세트 내 입맛대로 바꾸기',
+   story:'치즈버거 세트를 포장해 가요. 버거에 베이컨을 추가하고, 음료는 콜라 대신 사이다로 바꾸고 싶어요.',
+   dine:'out', pay:'card', phone:null, lines:[{item:'cheese_set',opts:{top:'bacon',drink:'cider'},qty:1}]},
+  {id:'b4', store:'burger', level:2, title:'치즈 듬뿍 치킨버거 두 개',
+   story:'매장에서 먹을 치킨버거 단품 2개를 시켜요. 두 개 모두 치즈를 추가해요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'chicken',opts:{top:'cheese'},qty:2}]},
+  {id:'b5', store:'burger', level:3, title:'손주와 함께 먹는 간식',
+   story:'손주와 매장에서 먹을 거예요. 새우버거 세트 2개(사이드는 치즈스틱, 음료는 제로콜라)와 소프트콘 1개를 시키고, 포인트를 적립한 뒤 휴대폰 간편결제로 계산해요.',
+   dine:'in', pay:'pay', phone:PHONE, lines:[{item:'shrimp_set',opts:{side:'cstick',drink:'zero'},qty:2},{item:'icecream',opts:{},qty:1}]},
+  {id:'b6', store:'burger', level:3, title:'가족 저녁 포장',
+   story:'불고기버거 세트(사이드는 양념감자, 음료는 오렌지주스) 1개, 치즈버거 단품(패티 추가) 1개, 애플파이 1개를 포장해요. 포인트를 적립하고 카드로 계산해요.',
+   dine:'out', pay:'card', phone:PHONE, lines:[{item:'bulgogi_set',opts:{side:'cfries',drink:'ojuice'},qty:1},{item:'cheese',opts:{top:'patty'},qty:1},{item:'pie',opts:{},qty:1}]},
+
+  /* ---------- 온기카페 ---------- */
+  {id:'c1', store:'cafe', level:1, title:'아이스 아메리카노 한 잔',
+   story:'더운 날이에요. 시원한 아메리카노 한 잔을 들고 나갈 거예요.',
+   dine:'out', pay:'card', phone:null, lines:[{item:'americano',opts:{temp:'ice'},qty:1}]},
+  {id:'c2', store:'cafe', level:1, title:'따뜻한 녹차라떼',
+   story:'카페에 앉아서 따뜻한 녹차라떼 한 잔을 마실 거예요. 크기는 보통이면 돼요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'greentea',opts:{temp:'hot'},qty:1}]},
+  {id:'c3', store:'cafe', level:2, title:'친구와 케이크 한 조각',
+   story:'카페에 앉아서 따뜻한 카페라떼 큰 사이즈 한 잔과 치즈케이크 한 조각을 먹을 거예요.',
+   dine:'in', pay:'card', phone:null, lines:[{item:'latte',opts:{temp:'hot',size:'large'},qty:1},{item:'cheesecake',opts:{},qty:1}]},
+  {id:'c4', store:'cafe', level:2, title:'딸기스무디 두 잔',
+   story:'손주와 마실 딸기스무디를 큰 사이즈로 두 잔 포장해요.',
+   dine:'out', pay:'card', phone:null, lines:[{item:'smoothie',opts:{size:'large'},qty:2}]},
+  {id:'c5', store:'cafe', level:3, title:'사무실 심부름',
+   story:'아이스 아메리카노 2잔은 진하게(샷 추가), 레몬에이드는 큰 사이즈로 1잔을 포장해요. 포인트를 적립한 뒤 휴대폰 간편결제로 계산해요.',
+   dine:'out', pay:'pay', phone:PHONE, lines:[{item:'americano',opts:{temp:'ice',shot:'extra'},qty:2},{item:'lemonade',opts:{size:'large'},qty:1}]},
+  {id:'c6', store:'cafe', level:3, title:'카페에서 여유로운 오후',
+   story:'아이스 바닐라라떼(샷 추가) 1잔, 핫초코 큰 사이즈 1잔, 크루아상 2개를 매장에서 먹어요. 포인트를 적립하고 카드로 계산해요.',
+   dine:'in', pay:'card', phone:PHONE, lines:[{item:'vanilla',opts:{temp:'ice',shot:'extra'},qty:1},{item:'choco',opts:{size:'large'},qty:1},{item:'croissant',opts:{},qty:2}]}
+];
+const LEVEL_NAME = {1:'쉬움',2:'보통',3:'어려움'};
+const PAY_NAME = {card:'카드 결제', pay:'휴대폰 간편결제'};
+const DINE_NAME = {in:'매장에서 먹기', out:'포장하기'};
+const IDLE_LIMIT = 40;     // 실전 모드: 이 시간(초) 동안 아무것도 안 누르면 시간 초과 경고
+const TIMEOUT_COUNT = 15;  // 경고 후 처음으로 돌아가기까지 남는 시간(초)
+
+/* =========================================================
+   2. 도우미 함수
+   ========================================================= */
+const won = n => n.toLocaleString('ko-KR') + '원';
+const fmtTime = s => Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+// 한국어 조사 붙이기: jo('사이다','을') → '를'
+function jo(word, t){
+  const pairs = {'을':['을','를'],'이':['이','가'],'은':['은','는'],'으로':['으로','로'],'과':['과','와']};
+  const [a,b] = pairs[t];
+  let w = String(word).trim();
+  // 끝에 붙은 괄호 부분 "(...)"은 겹쳐 있어도 통째로 빼고 앞 단어로 판단
+  while (w.endsWith(')')){
+    let depth = 0, i = w.length - 1;
+    for (; i >= 0; i--){ if (w[i] === ')') depth++; else if (w[i] === '(' && --depth === 0) break; }
+    if (i <= 0) break;
+    w = w.slice(0, i).trim();
+  }
+  // 숫자는 읽는 소리로 바꿔서 판단 (2 → 이, 8 → 팔)
+  const DIGIT = '영일이삼사오육칠팔구';
+  if (/\d$/.test(w)) w = DIGIT[+w[w.length-1]];
+  const ch = w.charCodeAt(w.length-1);
+  if (ch >= 0xAC00 && ch <= 0xD7A3){
+    const jong = (ch - 0xAC00) % 28;
+    if (t === '으로') return (jong === 0 || jong === 8) ? b : a;
+    return jong ? a : b;
+  }
+  return t === '으로' ? '(으)로' : a + '(' + b + ')';
+}
+const Q = (w,t) => '"' + w + '"' + jo(w,t);
+
+function fmtPhone(d){
+  const t = (d + '___________').slice(0,11);
+  const show = t.slice(0,3) + '-' + t.slice(3,7) + '-' + t.slice(7,11);
+  // 입력된 부분과 남은 부분 나누기
+  let count = 0, cut = show.length;
+  for (let i=0;i<show.length;i++){ if (show[i] !== '-'){ if (count === d.length){ cut = i; break; } count++; } }
+  return '<span>' + show.slice(0,cut) + '</span><span class="rest">' + show.slice(cut) + '</span>';
+}
+const phoneText = d => d.slice(0,3) + '-' + d.slice(3,7) + '-' + d.slice(7,11);
+
+/* ---------- 저장소 (실패해도 동작하게) ---------- */
+const LS_KEY = 'kiosk-practice-v2'; // 미션 구성이 바뀌어서 v2 (예전 기록과 섞이지 않게)
+function loadDB(){ try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch(e){ return {}; } }
+function saveDB(){ try { localStorage.setItem(LS_KEY, JSON.stringify(S.db)); } catch(e){} }
+
+/* =========================================================
+   3. 상태
+   ========================================================= */
+const S = {
+  view:'home', store:'foodcourt',
+  db: loadDB(),
+  set:null,
+  mission:null, mode:'practice',
+  started:false, finished:false,
+  stats:null, k:null,
+  hintOn:false, idle:0, nudge:false, lastSpoken:'', _g:null, result:null
+};
+S.db.records = S.db.records || {};
+S.set = Object.assign({scale:1, sound:true}, S.db.set || {});
+
+const store = () => STORES[S.mission ? S.mission.store : S.store];
+const item = id => store().items.find(i => i.id === id);
+// 지금 고른 칸(추천/세트/단품...)에 보이는 메뉴들
+function visibleIn(cat){
+  const st = store();
+  if (cat === 'rec' && st.featured) return st.featured.map(id => item(id));
+  return st.items.filter(i => i.cat === cat);
+}
+const groupsOf = (it,o) => (it.opts || []).filter(g => !g.when || g.when(o));
+function defaults(it){ const o = {}; (it.opts || []).forEach(g => { if (g.def !== undefined) o[g.key] = g.def; }); return o; }
+// 여러 개 고르는 옵션: 선택 목록 <-> 문자열 (보기 순서대로 정리해서 항상 같은 모양이 되게)
+const multiList = v => v ? String(v).split('+') : [];
+const multiVal = (g, list) => g.choices.map(c => c.id).filter(id => list.includes(id)).join('+');
+function norm(it,o){
+  const r = {};
+  groupsOf(it,o).forEach(g => { r[g.key] = g.multi ? multiVal(g, multiList(o[g.key])) : o[g.key]; });
+  return r;
+}
+function keyOf(id,o){ return id + '|' + Object.keys(o).sort().map(k => k + '=' + o[k]).join(','); }
+// 옵션 하나의 선택된 보기들 (보통 1개, 재료 추가는 여러 개)
+function chosen(g,o){
+  const ids = g.multi ? multiList(o[g.key]) : [o[g.key]];
+  return g.choices.filter(c => ids.includes(c.id));
+}
+function priceOf(it,o){
+  let p = it.price;
+  groupsOf(it,o).forEach(g => chosen(g,o).forEach(c => { if (c.price) p += c.price; }));
+  return p;
+}
+function optText(it,o){
+  return groupsOf(it,o).reduce((acc, g) => acc.concat(chosen(g,o).map(c => (c.short !== undefined ? c.short : c.name))), []).filter(Boolean).join(' · ');
+}
+function lineName(l){ const it = item(l.item); const t = optText(it,l.opts); return it.name + (t ? ' (' + t + ')' : ''); }
+
+function goalLines(){
+  return S.mission.lines.map(l => {
+    const it = item(l.item);
+    const o = norm(it, Object.assign(defaults(it), l.opts));
+    return {item:l.item, opts:o, qty:l.qty, key:keyOf(l.item,o)};
+  });
+}
+const goalQty = key => { const g = goalLines().find(g => g.key === key); return g ? g.qty : 0; };
+const cartIdx = key => S.k.cart.findIndex(l => l.key === key);
+const cartQty = key => { const i = cartIdx(key); return i < 0 ? 0 : S.k.cart[i].qty; };
+function cartMatches(){
+  const goals = goalLines();
+  return goals.every(g => cartQty(g.key) === g.qty) && S.k.cart.every(l => goalQty(l.key) === l.qty);
+}
+const cartTotal = () => S.k.cart.reduce((s,l) => s + priceOf(item(l.item), l.opts) * l.qty, 0);
+const cartCount = () => S.k.cart.reduce((s,l) => s + l.qty, 0);
+
+function addLine(id, opts){
+  const it = item(id);
+  const o = norm(it, opts);
+  const key = keyOf(id,o);
+  const i = cartIdx(key);
+  if (i >= 0) S.k.cart[i].qty++;
+  else S.k.cart.push({item:id, opts:o, qty:1, key});
+}
+
+/* =========================================================
+   4. 도우미(안내) — 현재 상태와 미션을 비교해 다음 할 일을 찾는다
+   ========================================================= */
+function guide(){
+  const k = S.k, m = S.mission;
+  if (k.popup && k.popup.type === 'timeout')
+    return {id:'to:yes', msg:'오래 기다려서 키오스크가 처음으로 돌아가려고 해요. "계속하기"를 누르세요.', why:'실제 키오스크도 한동안 안 누르면 주문이 취소돼요. 당황하지 말고 "계속하기"를 누르면 돼요.'};
+
+  // 결제 단계에 들어왔는데 주문 내용이 틀렸으면 "이전"으로 돌려보낸다
+  const BACK = {points:'pt:back', phone:'kp:cancel', method:'pm:back', card:'pay:back', qr:'pay:back'};
+  if (BACK[k.screen] && (!cartMatches() || k.dine !== m.dine))
+    return {id:BACK[k.screen], msg:'주문 내용이 미션과 달라요. "이전"을 눌러 돌아가서 고치세요.', why:'결제하기 전이라면 언제든 "이전"으로 돌아가 주문을 고칠 수 있어요.'};
+
+  switch (k.screen){
+    case 'start':
+      return {id:'start', msg:'키오스크를 시작해 볼까요? 화면 가운데의 "주문하기" 버튼을 누르세요.', why:'광고 화면이 나와 있어도 화면을 누르면 주문을 시작할 수 있어요.'};
+    case 'where':
+      return m.dine === 'in'
+        ? {id:'dine:in', msg:'가게 안에서 먹을 거니까 "매장에서 먹기"를 누르세요.'}
+        : {id:'dine:out', msg:'가지고 나갈 거니까 "포장하기"를 누르세요.'};
+    case 'menu': return menuGuide();
+    case 'confirm':
+      if (!cartMatches() || k.dine !== m.dine)
+        return {id:'cf:back', msg:'주문 내용이 미션과 달라요. "이전"을 눌러서 고치세요.'};
+      return {id:'cf:ok', msg:'주문 내용이 맞는지 한 번 더 확인하고 "결제하기"를 누르세요.', why:'결제 전에 메뉴와 개수, 금액을 꼭 확인하는 습관을 들이면 좋아요.'};
+    case 'points':
+      return m.phone
+        ? {id:'pt:yes', msg:'이번에는 포인트를 적립해요. "적립하기"를 누르세요.'}
+        : {id:'pt:no', msg:'포인트는 안 모아도 괜찮아요. "적립 안 함"을 누르세요.', why:'포인트 적립은 선택이에요. 안 해도 주문에 아무 문제가 없어요.'};
+    case 'phone': {
+      const want = m.phone || '';
+      if (!want) return {id:'kp:skip', msg:'적립을 하지 않을 거라면 "건너뛰기"를 누르세요.'};
+      if (!want.startsWith(k.phone)) return {id:'kp:back', msg:'숫자를 잘못 눌렀어요. "← 지우기"를 눌러 한 칸 지우세요.'};
+      if (k.phone.length < want.length){
+        const n = want[k.phone.length];
+        return {id:'kp:' + n, msg:'휴대폰 번호 ' + phoneText(want) + jo(want,'을') + ' 입력하고 있어요. 숫자 ' + Q(n,'을') + ' 누르세요.',
+                why: k.phone.length === 3 ? '앞자리 010은 이미 입력되어 있는 경우가 많아요.' : ''};
+      }
+      return {id:'kp:ok', msg:'번호를 다 입력했어요. "확인"을 누르세요.'};
+    }
+    case 'method':
+      if (m.phone && k.pointsPhone !== m.phone)
+        return {id:'pm:back', msg:'포인트 적립을 빠뜨렸어요. "이전"을 눌러 돌아가세요.'};
+      return m.pay === 'card'
+        ? {id:'pm:card', msg:'카드로 계산할 거예요. "신용/체크카드"를 누르세요.'}
+        : {id:'pm:pay', msg:'휴대폰으로 계산할 거예요. "간편결제"를 누르세요.', why:'간편결제는 휴대폰 결제 앱의 바코드를 기계에 비추는 방법이에요.'};
+    case 'card':
+    case 'qr':
+      if (k.method !== m.pay) return {id:'pay:back', msg:'결제 방법을 잘못 골랐어요. 아래의 "이전"을 눌러 다시 고르세요.'};
+      if (m.phone && k.pointsPhone !== m.phone) return {id:'pay:back', msg:'아직 포인트 적립을 안 했어요. 결제하기 전에 아래의 "이전"을 눌러 돌아가세요.'};
+      if (k.screen === 'qr')
+        return {id:'qr:scan', msg:'아래 휴대폰을 눌러서 바코드를 스캐너에 비추세요.', why:'실제로는 결제 앱을 열고 화면의 바코드를 빨간 불빛 쪽에 갖다 대요.'};
+      return {id:'card:insert', msg:'아래 카드를 눌러서 카드 투입구에 꽂으세요.', why:'실제로는 금색 칩이 있는 쪽을 투입구에 끝까지 밀어 넣어요.'};
+    case 'paying':
+      return {id:null, msg:'결제 중이에요. 잠시만 기다리세요. 이때 카드를 빼면 안 돼요!'};
+    case 'cardout':
+      return {id:'card:remove', msg:'결제가 끝났어요. 카드를 눌러서 빼세요. 카드를 두고 가지 않게 조심하세요!'};
+    case 'done':
+      // 영수증은 선택이라 정답을 짚지 않는다 (둘 중 아무거나 눌러도 실수로 세지 않음)
+      return {id:null, msg:'주문 끝! 주문번호 ' + k.orderNo + '번을 기억하세요. 영수증은 필요하면 "출력", 필요 없으면 "출력 안 함"을 누르면 돼요.',
+              why:'영수증은 골라서 하는 거예요. ' + store().pickup};
+  }
+  return null;
+}
+
+function menuGuide(){
+  const k = S.k, m = S.mission, st = store();
+
+  if (k.popup && k.popup.type === 'upsell'){
+    for (const id of st.upsell.items){
+      const key = keyOf(id,{});
+      if (cartQty(key) < goalQty(key)) return {id:'up:add:' + id, msg:Q(item(id).name,'을') + ' 함께 시켜야 해요. ' + Q(item(id).name,'을') + ' 누르세요.'};
+    }
+    return {id:'up:no', msg:'추가 메뉴를 권하는 화면이에요. 필요 없으니 "추가 안 함"을 누르세요.', why:'가게가 더 팔고 싶어서 보여주는 화면이에요. 안 시켜도 괜찮아요.'};
+  }
+
+  if (k.popup && k.popup.type === 'toset'){
+    const single = item(k.popup.itemId), set = item(single.setId);
+    const need = id => goalLines().some(g => g.item === id && cartQty(g.key) < g.qty);
+    if (need(set.id)) return {id:'ts:set', msg:'세트로 먹을 거예요. "세트로 변경"을 누르세요.', why:'단품을 눌러도 이렇게 세트로 바꿀 수 있어요.'};
+    if (need(single.id)) return {id:'ts:keep', msg:'세트로 바꾸라고 권하는 화면이에요. 버거만 먹을 거니까 "단품 그대로"를 누르세요.', why:'세트는 감자튀김과 음료가 같이 나오고 ' + won(SET_EXTRA) + '이 더 들어요. 필요 없으면 바꾸지 않아도 돼요.'};
+    return {id:'ts:cancel', msg:'이 버거는 이번에 시킬 메뉴가 아니에요. 오른쪽 위 "✕"를 눌러 닫으세요.'};
+  }
+
+  if (k.modal) return modalGuide();
+
+  if (k.dine !== m.dine)
+    return {id:'dinebtn', msg:'먹는 곳을 잘못 골랐어요. 위쪽 오른편의 "' + (k.dine === 'in' ? '매장' : '포장') + '" 버튼을 눌러 바꾸세요.'};
+
+  for (let i = 0; i < k.cart.length; i++){
+    const l = k.cart[i], gq = goalQty(l.key);
+    if (l.qty > gq){
+      return gq === 0
+        ? {id:'c:del:' + i, msg:'장바구니에 주문할 것과 다른 ' + Q(lineName(l),'이') + ' 있어요. 옆의 빨간 "✕"를 눌러 빼세요.'}
+        : {id:'c:minus:' + i, msg:Q(item(l.item).name,'이') + ' 너무 많아요. "−"를 눌러 ' + gq + '개로 줄이세요.'};
+    }
+  }
+  for (const g of goalLines()){
+    const cq = cartQty(g.key);
+    if (cq < g.qty){
+      const it = item(g.item);
+      if (cq > 0) return {id:'c:plus:' + cartIdx(g.key), msg:Q(it.name,'을') + ' ' + g.qty + '개 시켜야 해요. 장바구니의 "+"를 누르세요.', why:'같은 메뉴를 또 고르는 대신 "+"를 누르면 개수가 늘어나요.'};
+      if (!visibleIn(k.cat).includes(it)){
+        const cn = st.cats.find(c => c.id === it.cat).name;
+        const why = it.cat === 'set' ? '세트 메뉴(버거+사이드+음료)는 "세트" 칸에, 버거만 파는 것은 "단품" 칸에 있어요.'
+                  : it.cat === 'single' ? '버거만 사려면 "단품" 칸으로 가야 해요. "세트" 칸은 감자튀김과 음료가 같이 나와요.'
+                  : '키오스크는 메뉴가 종류별로 나뉘어 있어요. 위쪽 칸을 눌러 종류를 바꿀 수 있어요.';
+        return {id:'cat:' + it.cat, msg:Q(it.name,'은') + ' "' + cn + '" 칸에 있어요. 위쪽의 ' + Q(cn,'을') + ' 누르세요.', why};
+      }
+      return {id:'item:' + it.id, msg:Q(it.name,'을') + ' 누르세요.'};
+    }
+  }
+  return {id:'pay', msg:'필요한 메뉴를 다 담았어요! 아래의 "주문하기"를 누르세요.', why:'아래 장바구니에서 담은 메뉴와 금액을 확인할 수 있어요.'};
+}
+
+function modalGuide(){
+  const k = S.k, md = k.modal, it = item(md.itemId);
+  const goal = goalLines().find(g => g.item === md.itemId && cartQty(g.key) < g.qty);
+  if (!goal) return {id:'m:cancel', msg:'이 메뉴는 이번에 시킬 메뉴가 아니에요. 오른쪽 위 "✕"를 눌러 닫으세요.'};
+  const groups = groupsOf(it, md.opts);
+  for (let s = 0; s < md.step; s++){
+    const g = groups[s];
+    if (md.opts[g.key] !== goal.opts[g.key]) return {id:'m:prev', msg:'앞 단계에서 잘못 골랐어요. "이전"을 눌러 돌아가세요.'};
+  }
+  const g = groups[md.step];
+  const want = goal.opts[g.key];
+  if (g.multi){
+    const cur = multiList(md.opts[g.key]), wl = multiList(want);
+    for (const c of g.choices){
+      if (wl.includes(c.id) && !cur.includes(c.id))
+        return {id:'m:opt:' + g.key + ':' + c.id, msg:Q(c.name,'을') + ' 누르세요.', why:g.why};
+      if (!wl.includes(c.id) && cur.includes(c.id))
+        return {id:'m:opt:' + g.key + ':' + c.id, msg:Q(c.name,'은') + ' 필요 없어요. 한 번 더 눌러서 빼세요.', why:'한 번 누르면 골라지고, 다시 누르면 빠져요.'};
+    }
+    const none = !wl.length;
+    if (md.step < groups.length - 1)
+      return {id:'m:next', msg:none ? '재료는 추가하지 않아요. 아무것도 누르지 말고 "다음"을 누르세요.' : '잘 골랐어요. "다음"을 누르세요.', why:none ? g.why : ''};
+    return {id:'m:add', msg:none ? '재료는 추가하지 않아요. 아무것도 누르지 말고 "담기"를 누르세요.' : '다 골랐어요. "담기"를 눌러 장바구니에 넣으세요.', why:none ? g.why : ''};
+  }
+  if (md.opts[g.key] !== want){
+    const c = g.choices.find(c => c.id === want);
+    let msg = Q(c.name,'을') + ' 누르세요.';
+    if (g.def && md.opts[g.key] === g.def){
+      const dc = g.choices.find(c => c.id === g.def);
+      msg = Q(dc.name,'이') + ' 미리 골라져 있어요. ' + Q(c.name,'을') + ' 눌러서 바꾸세요.';
+    }
+    return {id:'m:opt:' + g.key + ':' + want, msg, why:g.why || ''};
+  }
+  if (md.step < groups.length - 1){
+    const why = g.def && want === g.def ? '이미 골라져 있는 것(기본)을 그대로 쓰면 돼요.' : '';
+    return {id:'m:next', msg:'잘 골랐어요. "다음"을 누르세요.', why};
+  }
+  return {id:'m:add', msg:'다 골랐어요. "담기"를 눌러 장바구니에 넣으세요.'};
+}
+
+/* =========================================================
+   5. 키오스크 동작
+   ========================================================= */
+function resetKiosk(){
+  const gen = (S.k ? S.k.gen : 0) + 1;
+  S.k = {screen:'start', dine:null, cat:null, cart:[], modal:null, popup:null, phone:'', pointsPhone:null,
+         method:null, orderNo:null, toast:null, gen};
+}
+
+let toastTimer = null;
+function kToast(msg){
+  S.k.toast = msg;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    if (S.k) S.k.toast = null;
+    const t = document.querySelector('.k-toast'); if (t) t.remove();
+  }, 2200);
+}
+
+function maybeUpsell(it){
+  const up = store().upsell;
+  if (up && up.after.includes(it.cat)) S.k.popup = {type:'upsell'};
+}
+function openItem(it){
+  if (it.opts && it.opts.length){ S.k.modal = {itemId:it.id, step:0, opts:defaults(it)}; }
+  else { addLine(it.id,{}); kToast(it.name + ' 1개를 담았어요'); maybeUpsell(it); }
+}
+
+function act(id){
+  const k = S.k, st = store();
+  const p = id.split(':');
+  switch (p[0]){
+    case 'start': k.screen = 'where'; break;
+    case 'home': resetKiosk(); kToast('처음 화면으로 돌아왔어요'); break;
+    case 'dine': k.dine = p[1]; k.screen = 'menu'; k.cat = st.cats[0].id; break;
+    case 'dinebtn': k.dine = k.dine === 'in' ? 'out' : 'in'; kToast('"' + DINE_NAME[k.dine] + '"' + jo(DINE_NAME[k.dine],'으로') + ' 바꿨어요'); break;
+    case 'cat': k.cat = p[1]; break;
+    case 'item': {
+      const it = item(p[1]);
+      if (it.soldOut){ kToast('품절된 메뉴예요. 다른 메뉴를 골라주세요'); break; }
+      if (it.setId){ k.popup = {type:'toset', itemId:it.id}; break; }  // 단품 버거 → "세트로 바꿀까요?"
+      openItem(it);
+      break;
+    }
+    case 'ts': {
+      const single = item(k.popup.itemId);
+      k.popup = null;
+      if (p[1] === 'set') openItem(item(single.setId));
+      else if (p[1] === 'keep') openItem(single);
+      break;
+    }
+    case 'm': {
+      const md = k.modal; if (!md) break;
+      const it = item(md.itemId);
+      const groups = groupsOf(it, md.opts);
+      const g = groups[md.step];
+      if (p[1] === 'cancel'){ k.modal = null; }
+      else if (p[1] === 'opt'){
+        const og = groups.find(x => x.key === p[2]);
+        if (og && og.multi){
+          const list = multiList(md.opts[og.key]);
+          const i = list.indexOf(p[3]);
+          if (i >= 0) list.splice(i,1); else list.push(p[3]);
+          md.opts[og.key] = multiVal(og, list);
+        } else md.opts[p[2]] = p[3];
+      }
+      else if (p[1] === 'prev'){ md.step = Math.max(0, md.step - 1); }
+      else if (p[1] === 'next' || p[1] === 'add'){
+        if (!g.multi && !md.opts[g.key]){ kToast('먼저 하나를 골라주세요'); break; }
+        if (p[1] === 'next') md.step++;
+        else { addLine(it.id, md.opts); k.modal = null; kToast(it.name + ' 1개를 담았어요'); maybeUpsell(it); }
+      }
+      break;
+    }
+    case 'up':
+      if (p[1] === 'add'){ addLine(p[2],{}); kToast(item(p[2]).name + ' 1개를 담았어요'); }
+      k.popup = null; break;
+    case 'c': {
+      const i = +p[2], l = k.cart[i]; if (!l) break;
+      if (p[1] === 'plus') l.qty++;
+      else if (p[1] === 'minus'){ if (l.qty > 1) l.qty--; else kToast('빼려면 빨간 ✕를 누르세요'); }
+      else if (p[1] === 'del') k.cart.splice(i,1);
+      break;
+    }
+    case 'pay':
+      if (p[1] === 'back'){ k.method = null; k.screen = 'method'; break; }
+      if (!k.cart.length){ kToast('먼저 메뉴를 담아주세요'); break; }
+      k.screen = 'confirm'; break;
+    case 'cf': k.screen = p[1] === 'back' ? 'menu' : 'points'; break;
+    case 'pt':
+      if (p[1] === 'back'){ k.screen = 'confirm'; break; }
+      if (p[1] === 'yes'){ k.screen = 'phone'; k.phone = '010'; }
+      else { k.pointsPhone = null; k.screen = 'method'; }
+      break;
+    case 'kp':
+      if (/^\d$/.test(p[1])){ if (k.phone.length < 11) k.phone += p[1]; }
+      else if (p[1] === 'back') k.phone = k.phone.slice(0,-1);
+      else if (p[1] === 'clear') k.phone = '';
+      else if (p[1] === 'skip'){ k.pointsPhone = null; k.screen = 'method'; }
+      else if (p[1] === 'cancel'){ k.screen = 'points'; }
+      else if (p[1] === 'ok'){
+        if (k.phone.length < 11){ kToast('번호를 끝까지 입력해주세요'); break; }
+        k.pointsPhone = k.phone; k.screen = 'method'; kToast('포인트가 적립될 예정이에요');
+      }
+      break;
+    case 'pm':
+      if (p[1] === 'back') k.screen = 'confirm';
+      else if (p[1] === 'cash') kToast('현금 결제는 카운터 직원에게 말씀해주세요');
+      else { k.method = p[1]; k.screen = p[1] === 'card' ? 'card' : 'qr'; }
+      break;
+    case 'card':
+      if (p[1] === 'insert') startPaying('cardout');
+      else if (p[1] === 'remove') finishOrder();
+      break;
+    case 'qr': startPaying('done'); break;
+    case 'rc':
+      if (p[1] === 'yes') kToast('영수증이 나왔어요 🧾');
+      finishMission();
+      break;
+    case 'to': k.popup = k.popup ? k.popup.prev || null : null; break;
+  }
+}
+
+function startPaying(next){
+  const k = S.k, gen = k.gen, run = S.runId;
+  k.screen = 'paying';
+  setTimeout(() => {
+    if (!S.k || S.k.gen !== gen || S.runId !== run || S.view !== 'play') return;
+    if (next === 'done') finishOrder(); else { S.k.screen = next; render(); }
+  }, 2300);
+}
+function finishOrder(){
+  S.k.orderNo = 100 + Math.floor(Math.random() * 900);
+  S.k.screen = 'done';
+  render();
+}
+
+/* =========================================================
+   6. 미션 시작 / 종료 / 평가
+   ========================================================= */
+function startMission(id, mode){
+  S.mission = MISSIONS.find(m => m.id === id);
+  S.mode = mode; S.view = 'play';
+  S.started = false; S.finished = false;
+  S.stats = {start:0, misses:0, hints:0, timeouts:0, time:0};
+  S.hintOn = false; S.idle = 0; S.nudge = false; S.lastSpoken = '';
+  S.runId = (S.runId || 0) + 1;
+  resetKiosk();
+  render(); window.scrollTo(0,0);
+}
+
+function evaluate(){
+  const k = S.k, m = S.mission, errs = [];
+  for (const g of goalLines()){
+    const cq = cartQty(g.key);
+    if (cq === 0) errs.push(Q(lineName(g),'을') + ' 빠뜨렸어요.');
+    else if (cq !== g.qty) errs.push(Q(lineName(g),'을') + ' ' + g.qty + '개가 아니라 ' + cq + '개 시켰어요.');
+  }
+  for (const l of k.cart) if (goalQty(l.key) === 0) errs.push('시키지 않아도 되는 ' + Q(lineName(l),'을') + ' 시켰어요.');
+  if (k.dine !== m.dine) errs.push(Q(DINE_NAME[m.dine],'을') + ' 골라야 했어요.');
+  if (m.phone && k.pointsPhone !== m.phone) errs.push('포인트 적립(' + phoneText(m.phone) + ')을 하지 않았어요.');
+  if (k.method !== m.pay) errs.push(PAY_NAME[m.pay] + jo(PAY_NAME[m.pay],'으로') + ' 계산해야 했어요.');
+  return errs;
+}
+
+function finishMission(){
+  if (S.finished) return;
+  S.finished = true;
+  const st = S.stats;
+  st.time = Math.round((Date.now() - st.start) / 1000);
+  const errs = evaluate();
+  const ok = errs.length === 0;
+  let stars = 0;
+  if (ok){
+    stars = 1;
+    if (st.misses <= 6 && st.timeouts === 0) stars = 2;
+    if (st.misses <= 2 && st.hints === 0 && st.timeouts === 0) stars = 3;
+  }
+  S.result = Object.assign({ok, errs, stars}, st);
+  const rec = S.db.records[S.mission.id] = S.db.records[S.mission.id] || [];
+  rec.push({at:Date.now(), mode:S.mode, time:st.time, misses:st.misses, hints:st.hints, ok, stars});
+  if (rec.length > 30) rec.splice(0, rec.length - 30);
+  saveDB();
+  try { speechSynthesis.cancel(); } catch(e){}
+  const run = S.runId;
+  setTimeout(() => {
+    if (S.view !== 'play' || S.runId !== run) return;
+    S.view = 'result'; render(); window.scrollTo(0,0);
+    speak(ok ? '주문 성공! 잘하셨어요.' : '아쉬워요. 주문이 조금 달라요. 다시 해 볼까요?');
+  }, 1300);
+}
+
+/* =========================================================
+   7. 소리 (음성 안내 · 효과음) — 인터넷 없이 브라우저 기능만 사용
+   ========================================================= */
+let actx = null;
+function beep(){
+  if (!S.set.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.frequency.value = 880; o.type = 'sine';
+    g.gain.setValueAtTime(0.06, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + 0.12);
+    o.connect(g); g.connect(actx.destination);
+    o.start(); o.stop(actx.currentTime + 0.13);
+  } catch(e){}
+}
+function speak(text){
+  if (!S.set.sound || !('speechSynthesis' in window) || !text) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/["“”✕−←]/g,' '));
+    u.lang = 'ko-KR'; u.rate = 0.95;
+    const v = speechSynthesis.getVoices().find(v => /^ko/i.test(v.lang));
+    if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  } catch(e){}
+}
+if ('speechSynthesis' in window){ try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = () => {}; } catch(e){} }
+
+/* =========================================================
+   8. 화면 그리기 — 홈
+   ========================================================= */
+function bestOf(id){
+  const rec = (S.db.records[id] || []).filter(r => r.ok);
+  if (!rec.length) return null;
+  return {stars:Math.max(...rec.map(r => r.stars)), time:Math.min(...rec.map(r => r.time)), n:(S.db.records[id] || []).length};
+}
+const starStr = n => '<span>' + '⭐'.repeat(n) + '</span><span class="off">' + '⭐'.repeat(3-n) + '</span>';
+
+function homeHTML(){
+  const s = S.set;
+  const missions = MISSIONS.filter(m => m.store === S.store);
+  return `
+  <div class="home">
+    <header class="hero">
+      <div class="ico">🖐️</div>
+      <div>
+        <h1>키오스크 연습실</h1>
+        <p>뒷사람 눈치 보지 않고, 천천히 몇 번이고 연습해요.<br>손가락이 가리키는 곳을 따라 누르기만 하면 돼요.</p>
+      </div>
+    </header>
+
+    <section class="sec">
+      <h2><span class="n">1</span>화면 설정</h2>
+      <div class="row" style="margin-bottom:10px">
+        <span class="lbl">글자 크기</span>
+        <div class="seg">
+          ${[[1,'보통'],[1.25,'크게'],[1.45,'아주 크게']].map(([v,n]) => `<button data-a="scale:${v}" class="${s.scale==v?'on':''}">${n}</button>`).join('')}
+        </div>
+      </div>
+      <div class="row">
+        <span class="lbl">소리 안내</span>
+        <div class="seg">
+          <button data-a="sound:1" class="${s.sound?'on':''}">🔊 켜기</button>
+          <button data-a="sound:0" class="${!s.sound?'on':''}">🔇 끄기</button>
+        </div>
+        <button class="btn" data-a="testvoice">소리 들어보기</button>
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2><span class="n">2</span>연습할 가게를 고르세요</h2>
+      <div class="stores">
+        ${Object.values(STORES).map(st => `
+          <button class="store ${S.store===st.id?'on':''}" data-a="store:${st.id}">
+            <span class="e">${st.logo}</span>
+            <span><b>${st.name}</b><small>${st.desc}</small></span>
+          </button>`).join('')}
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2><span class="n">3</span>미션을 고르세요</h2>
+      <div class="missions">
+        ${missions.map((m,i) => {
+          const b = bestOf(m.id);
+          return `
+          <div class="mcard">
+            <div class="mnum">${i+1}</div>
+            <div>
+              <span class="lv lv${m.level}">${LEVEL_NAME[m.level]}</span>
+              <h3>${m.title}</h3>
+              <p>${m.story}</p>
+              <div class="best">${b ? '최고 기록 ' + '⭐'.repeat(b.stars) + ' · ' + fmtTime(b.time) + ' · 도전 ' + b.n + '번' : '아직 도전하지 않았어요'}</div>
+            </div>
+            <div class="acts">
+              <button class="btn pri" data-a="play:${m.id}:practice">👆 연습하기</button>
+              <button class="btn dark" data-a="play:${m.id}:real">⏱ 실전 도전</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </section>
+
+    <section class="sec">
+      <h2>두 가지 모드</h2>
+      <div class="how">
+        <div><b>👆 연습하기</b><p>손가락과 목소리가 다음에 누를 곳을 하나하나 알려줘요. 잘못 눌러도 다시 알려주니 걱정 없어요.</p></div>
+        <div><b>⏱ 실전 도전</b><p>안내 없이 혼자 해봐요. 실제처럼 오래 가만히 있으면 처음으로 돌아가고, 뒤에 손님이 줄을 서요. 막히면 "도움 받기"를 누르세요.</p></div>
+      </div>
+    </section>
+
+    <p class="foot">키오스크 연습실 · 디지털 소외 없이 누구나 편하게 주문하는 세상을 위해<br>실제 결제는 일어나지 않아요. 기록은 이 컴퓨터의 브라우저에만 저장돼요.</p>
+  </div>`;
+}
+
+/* =========================================================
+   9. 화면 그리기 — 키오스크
+   ========================================================= */
+function kHead(showDine, noHome){
+  const st = store(), k = S.k;
+  return `<div class="k-head">
+    ${noHome ? '<span style="width:5.5em"></span>' : '<button class="k-home" data-k data-id="home">⌂ 처음으로</button>'}
+    <div class="k-logo">${st.logo} ${st.name}</div>
+    ${showDine ? `<button class="k-dine" data-k data-id="dinebtn">${k.dine==='in'?'🍽 매장':'🛍 포장'} ⇄</button>` : '<span style="width:4.5em"></span>'}
+  </div>`;
+}
+
+function kioskHTML(){
+  const k = S.k, st = store();
+  let h = '';
+  switch (k.screen){
+    case 'start':
+      h = `<div class="k-start">
+        <div class="art">${st.art}</div>
+        <h1>${st.name}</h1>
+        <p>${st.slogan}</p>
+        <button class="go" data-k data-id="start">👆 주문하기</button>
+        <div class="langs"><span>한국어</span><span>English</span><span>中文</span><span>日本語</span></div>
+      </div>`; break;
+
+    case 'where':
+      h = kHead(false) + `<div class="k-body">
+        <div class="k-title">어디에서 드시나요?</div>
+        <div class="k-sub">드실 곳을 선택해 주세요</div>
+        <div class="k-where">
+          <button data-k data-id="dine:in"><span class="e">🍽️</span>매장에서 먹기</button>
+          <button data-k data-id="dine:out"><span class="e">🛍️</span>포장하기</button>
+        </div></div>`; break;
+
+    case 'menu': {
+      const items = visibleIn(k.cat);
+      h = kHead(true) + `
+        <div class="k-tabs">${st.cats.map(c => `<button data-k data-id="cat:${c.id}" class="${k.cat===c.id?'on':''}">${c.name}</button>`).join('')}</div>
+        <div class="k-grid">${items.map(it => `
+          <button class="k-item ${it.soldOut?'sold':''}" data-k data-id="item:${it.id}">
+            ${it.tag ? `<span class="tag">${it.tag}</span>` : ''}
+            <span class="e ${it.combo?'combo':''}">${it.emoji}</span><b>${it.name}</b><span>${won(it.price)}</span>
+          </button>`).join('')}
+        </div>
+        <div class="k-cart">
+          <div class="k-cart-list">${k.cart.length ? k.cart.map((l,i) => {
+            const it = item(l.item), t = optText(it,l.opts);
+            return `<div class="k-line">
+              <div class="nm">${it.name}${t ? `<small>${t}</small>` : ''}</div>
+              <div class="q"><button data-k data-id="c:minus:${i}">−</button><span>${l.qty}</span><button data-k data-id="c:plus:${i}">+</button></div>
+              <div class="pr">${won(priceOf(it,l.opts) * l.qty)}</div>
+              <button class="del" data-k data-id="c:del:${i}">✕</button>
+            </div>`; }).join('') : '<p class="empty">🛒 장바구니가 비어 있어요. 메뉴를 눌러 담아주세요.</p>'}
+          </div>
+          <div class="k-cart-foot">
+            <div class="sum">총 ${cartCount()}개<b>${won(cartTotal())}</b></div>
+            <button class="k-pay ${k.cart.length?'':'off'}" data-k data-id="pay">주문하기</button>
+          </div>
+        </div>`;
+      if (k.modal) h += modalHTML();
+      if (k.popup && k.popup.type === 'upsell') h += upsellHTML();
+      if (k.popup && k.popup.type === 'toset') h += toSetHTML();
+      break;
+    }
+
+    case 'confirm':
+      h = kHead(false) + `<div class="k-body"><div class="k-title">주문 내역을 확인해 주세요</div>
+        <div class="k-confirm">
+          <span class="k-tagline">${k.dine==='in'?'🍽 매장에서 먹기':'🛍 포장하기'}</span>
+          <div class="k-list">${k.cart.map(l => {
+            const it = item(l.item), t = optText(it,l.opts);
+            return `<div class="ln"><div><b>${it.emoji} ${it.name} × ${l.qty}</b>${t?`<small>${t}</small>`:''}</div><b>${won(priceOf(it,l.opts)*l.qty)}</b></div>`; }).join('')}
+          </div>
+          <div class="k-total"><span>결제할 금액</span><span>${won(cartTotal())}</span></div>
+        </div></div>
+        <div class="k-foot"><button class="k-b" data-k data-id="cf:back">이전</button><button class="k-b pri" data-k data-id="cf:ok">결제하기</button></div>`;
+      break;
+
+    case 'points':
+      h = kHead(false) + `<div class="k-body">
+        <div class="k-title">포인트를 적립하시겠어요?</div>
+        <div class="k-sub">${st.name} 멤버십 회원은 결제 금액의 5%를 모을 수 있어요</div>
+        <div class="k-choice-col">
+          <button data-k data-id="pt:yes"><span class="e">📱</span><span>적립하기<small>휴대폰 번호로 적립</small></span></button>
+          <button data-k data-id="pt:no"><span class="e">🙅</span><span>적립 안 함<small>바로 결제로 넘어가기</small></span></button>
+        </div></div>
+        <div class="k-foot"><button class="k-b" data-k data-id="pt:back">이전</button></div>`;
+      break;
+
+    case 'phone':
+      h = kHead(false) + `<div class="k-body">
+        <div class="k-title">휴대폰 번호를 입력해 주세요</div>
+        <div class="k-phone">${fmtPhone(k.phone)}</div>
+        <div class="k-pad">
+          ${[1,2,3,4,5,6,7,8,9].map(n => `<button data-k data-id="kp:${n}">${n}</button>`).join('')}
+          <button class="fn" data-k data-id="kp:clear">전체 지우기</button>
+          <button data-k data-id="kp:0">0</button>
+          <button class="fn" data-k data-id="kp:back">← 지우기</button>
+        </div></div>
+        <div class="k-foot"><button class="k-b" data-k data-id="kp:cancel">이전</button><button class="k-b" data-k data-id="kp:skip">건너뛰기</button><button class="k-b pri" data-k data-id="kp:ok">확인</button></div>`;
+      break;
+
+    case 'method':
+      h = kHead(false) + `<div class="k-body">
+        <div class="k-title">결제 방법을 골라 주세요</div>
+        <div class="k-sub">결제할 금액 <b>${won(cartTotal())}</b></div>
+        <div class="k-choice-col">
+          <button data-k data-id="pm:card"><span class="e">💳</span><span>신용/체크카드<small>카드를 꽂아서 결제</small></span></button>
+          <button data-k data-id="pm:pay"><span class="e">📱</span><span>간편결제<small>휴대폰 결제 앱 바코드</small></span></button>
+          <button class="dim" data-k data-id="pm:cash"><span class="e">💵</span><span>현금<small>카운터에서 결제</small></span></button>
+        </div></div>
+        <div class="k-foot"><button class="k-b" data-k data-id="pm:back">이전</button></div>`;
+      break;
+
+    case 'card':
+      h = kHead(false) + `<div class="k-body">
+        <div class="k-title">카드를 꽂아 주세요</div>
+        <div class="k-sub">결제할 금액 <b>${won(cartTotal())}</b></div>
+        <div class="k-cardzone">
+          <div class="k-slot"><span>▲ 카드 투입구</span></div>
+          <div style="height:10px"></div>
+          <button class="k-card" data-k data-id="card:insert"><span>MY CARD</span><span class="chip"></span><span class="no">1234 •••• •••• 5678</span></button>
+        </div></div>
+        <div class="k-foot"><button class="k-b" data-k data-id="pay:back">이전</button></div>`;
+      break;
+
+    case 'qr':
+      h = kHead(false) + `<div class="k-body">
+        <div class="k-title">바코드를 비춰 주세요</div>
+        <div class="k-sub">결제 앱의 바코드를 아래 스캐너에 대 주세요</div>
+        <div class="k-cardzone">
+          <div class="k-scanner"></div>
+          <button class="k-phonepay" data-k data-id="qr:scan"><div><span>결제 앱</span><span class="k-barcode"></span><span>${won(cartTotal())}</span></div></button>
+        </div></div>
+        <div class="k-foot"><button class="k-b" data-k data-id="pay:back">이전</button></div>`;
+      break;
+
+    case 'paying':
+      h = kHead(false, true) + `<div class="k-wait">
+        ${k.method === 'card' ? '<div class="k-slot" style="width:70%"></div><div class="k-card in" style="pointer-events:none"><span class="chip"></span></div>' : ''}
+        <div class="spin"></div>
+        <h2>결제 중입니다</h2>
+        <p>${k.method === 'card' ? '⚠ 결제가 끝날 때까지 카드를 빼지 마세요' : '잠시만 기다려 주세요'}</p>
+      </div>`;
+      break;
+
+    case 'cardout':
+      h = kHead(false, true) + `<div class="k-wait">
+        <div class="k-slot" style="width:70%"></div>
+        <button class="k-card out" data-k data-id="card:remove"><span class="chip"></span><span class="no">눌러서 빼기</span></button>
+        <h2>결제가 완료되었습니다</h2>
+        <p>카드를 꼭 챙겨 가세요!</p>
+      </div>`;
+      break;
+
+    case 'done':
+      h = `<div class="k-done">
+        <div class="ok">✅</div>
+        <h2 style="font-size:1.5rem">주문이 완료되었어요</h2>
+        <div class="num">주문번호<b>${k.orderNo}</b></div>
+        <p style="color:var(--muted)">${st.pickup}</p>
+        <h3 style="margin-top:10px">영수증을 출력할까요?</h3>
+        <div class="rc"><button class="k-b" data-k data-id="rc:yes">출력</button><button class="k-b pri" data-k data-id="rc:no">출력 안 함</button></div>
+      </div>`;
+      break;
+  }
+
+  if (k.popup && k.popup.type === 'timeout'){
+    h += `<div class="k-modal center"><div class="k-sheet">
+      <div style="font-size:2.6rem">⏰</div>
+      <h3>주문을 계속하시겠어요?</h3>
+      <p style="color:var(--muted)"><b style="color:var(--bad);font-size:1.6rem">${k.popup.left}</b>초 뒤에 처음 화면으로 돌아가요</p>
+      <button class="k-b pri wide" data-k data-id="to:yes">계속하기</button>
+    </div></div>`;
+  }
+  if (k.toast) h += `<div class="k-toast">${esc(k.toast)}</div>`;
+  h += '<div class="finger" id="finger"></div>';
+  return h;
+}
+
+function modalHTML(){
+  const md = S.k.modal, it = item(md.itemId);
+  const groups = groupsOf(it, md.opts);
+  const g = groups[md.step];
+  const last = md.step === groups.length - 1;
+  return `<div class="k-modal"><div class="k-sheet">
+    <button class="close" data-k data-id="m:cancel">✕</button>
+    <div class="k-sheet-head"><span class="e ${it.combo?'combo':''}">${it.emoji}</span><div><b>${it.name}</b><small>${md.step+1} / ${groups.length} 단계</small></div></div>
+    <div class="k-steps">${groups.map((_,i) => `<i class="${i<=md.step?'on':''}"></i>`).join('')}</div>
+    <h3>${g.title}</h3>
+    ${g.multi ? '<p class="k-multi">여러 개 고를 수 있어요 · 필요 없으면 바로 다음으로</p>' : ''}
+    <div class="k-choices">${g.choices.map(c => `
+      <button class="k-choice ${chosen(g,md.opts).includes(c)?'on':''}" data-k data-id="m:opt:${g.key}:${c.id}">
+        <span class="e">${c.emoji||''}</span><b>${c.name}</b><small>${c.price ? '+' + won(c.price) : (c.desc || '')}</small>
+      </button>`).join('')}
+    </div>
+    <div class="k-sheet-foot">
+      ${md.step > 0 ? '<button class="k-b" data-k data-id="m:prev">이전</button>' : '<span style="width:4.2em"></span>'}
+      <div class="price">${won(priceOf(it, md.opts))}</div>
+      <button class="k-b pri" data-k data-id="${last?'m:add':'m:next'}">${last?'🛒 담기':'다음 →'}</button>
+    </div>
+  </div></div>`;
+}
+
+function toSetHTML(){
+  const single = item(S.k.popup.itemId), set = item(single.setId);
+  return `<div class="k-modal center"><div class="k-sheet">
+    <button class="close" data-k data-id="ts:cancel">✕</button>
+    <div style="font-size:1rem;color:var(--muted);margin-top:4px">${single.name}</div>
+    <h3>세트로 변경하시겠어요?</h3>
+    <div class="k-choices">
+      <button class="k-choice" data-k data-id="ts:keep"><span class="e">${single.emoji}</span><b>단품 그대로</b><small>버거만 · ${won(single.price)}</small></button>
+      <button class="k-choice" data-k data-id="ts:set"><span class="e combo">${set.emoji}</span><b>세트로 변경</b><small>+${won(SET_EXTRA)} · 사이드+음료</small></button>
+    </div>
+  </div></div>`;
+}
+
+function upsellHTML(){
+  const up = store().upsell;
+  return `<div class="k-modal center"><div class="k-sheet">
+    <div style="font-size:2.2rem">🎁</div>
+    <h3>${up.title}</h3>
+    <div class="k-choices">${up.items.map(id => { const it = item(id); return `
+      <button class="k-choice" data-k data-id="up:add:${id}"><span class="e">${it.emoji}</span><b>${it.name}</b><small>+${won(it.price)}</small></button>`; }).join('')}
+    </div>
+    <button class="k-b wide" data-k data-id="up:no">추가 안 함</button>
+  </div></div>`;
+}
+
+/* =========================================================
+   10. 화면 그리기 — 옆 패널, 시작 안내
+   ========================================================= */
+function checklist(){
+  return checklistRows().map(r => `<li class="${r.d?'done':''}"><span class="b">${r.d?'✓':''}</span><span>${r.t}</span></li>`).join('');
+}
+function checklistRows(){
+  const k = S.k, m = S.mission;
+  const rows = goalLines().map(g => ({t: lineName(g) + ' × ' + g.qty, d: cartQty(g.key) === g.qty && k.screen !== 'start'}));
+  rows.push({t:'먹는 곳: ' + DINE_NAME[m.dine], d:k.dine === m.dine});
+  if (m.phone) rows.push({t:'포인트 적립: ' + phoneText(m.phone), d:k.pointsPhone === m.phone});
+  rows.push({t:'계산: ' + PAY_NAME[m.pay], d:k.method === m.pay && ['paying','cardout','done'].includes(k.screen)});
+  return rows;
+}
+
+function panelHTML(){
+  const m = S.mission, g = S._g, practice = S.mode === 'practice';
+  const showHelp = practice || S.hintOn;
+  let guideBox;
+  if (showHelp && g){
+    guideBox = `<section class="guide ${S.nudge?'shake':''}">
+      <div class="who"><span class="face">🙋</span>도우미</div>
+      ${S.nudge ? '<div class="nudge">괜찮아요! 주황색으로 반짝이는 곳을 눌러 보세요.</div>' : ''}
+      <p class="msg">${esc(g.msg)}</p>
+      ${g.why ? `<p class="why">💡 ${esc(g.why)}</p>` : ''}
+      <button class="say" data-a="say">🔊 다시 듣기</button>
+    </section>`;
+  } else {
+    guideBox = `<section class="guide hidden-help">
+      <div class="who"><span class="face">🤫</span>실전 모드</div>
+      <p style="font-weight:700">혼자 힘으로 주문해 보세요. 막히면 아래 버튼을 누르세요.</p>
+      <button class="btn pri" style="margin-top:10px;width:100%" data-a="hint">💡 도움 받기 (${S.stats.hints}번 사용)</button>
+    </section>`;
+  }
+  return `<aside class="panel">
+    <div class="ptop">
+      <button class="btn" data-a="home">🏠 메인 화면</button>
+      <span class="mode-badge ${S.mode}">${practice ? '👆 연습 모드' : '⏱ 실전 모드'}</span>
+    </div>
+    <section class="pcard">
+      <span class="lv lv${m.level}">${LEVEL_NAME[m.level]}</span>
+      <h2>${m.title}</h2>
+      <p class="story">${m.story}</p>
+      <ul class="check">${checklist()}</ul>
+    </section>
+    ${guideBox}
+    <div class="stats">
+      <div><span>걸린 시간</span><b id="tElapsed">${fmtTime(S.started ? Math.floor((Date.now()-S.stats.start)/1000) : 0)}</b></div>
+      <div><span>헤맨 횟수</span><b>${S.stats.misses}</b></div>
+      ${practice
+        ? (() => { const li = checklistRows(); return `<div><span>완료 항목</span><b>${li.filter(r => r.d).length}/${li.length}</b></div>`; })()
+        : `<div><span>시간 초과</span><b>${S.stats.timeouts}</b></div>`}
+    </div>
+    ${practice ? '' : `<div class="queue"><div>뒤에서 기다리는 손님</div><div class="ppl" id="queue">${queueHTML()}</div><small style="color:var(--muted)">실제처럼 줄이 생겨요. 그래도 천천히 해도 괜찮아요.</small></div>`}
+    <div class="pact"><button class="btn" data-a="restart">↺ 처음부터 다시</button></div>
+  </aside>`;
+}
+
+function queueHTML(){
+  if (!S.started) return '';
+  const sec = Math.floor((Date.now() - S.stats.start) / 1000);
+  const n = Math.min(6, Math.floor(sec / 20));
+  if (!n) return '<span style="font-size:1rem;color:var(--muted)">아직 아무도 없어요</span>';
+  const faces = ['🙂','🙂','😐','😐','😑','😤'];
+  return faces.slice(0,n).join('');
+}
+
+function introHTML(){
+  const m = S.mission, practice = S.mode === 'practice';
+  return `<div class="intro"><div class="intro-box">
+    <span class="lv lv${m.level}">${LEVEL_NAME[m.level]}</span> <span class="mode-badge ${S.mode}">${practice?'👆 연습 모드':'⏱ 실전 모드'}</span>
+    <h2>${store().logo} ${m.title}</h2>
+    <p class="story">${m.story}</p>
+    <ul class="check">${goalLines().map(g => `<li><span class="b"></span><span>${lineName(g)} × ${g.qty}</span></li>`).join('')}
+      <li><span class="b"></span><span>먹는 곳: ${DINE_NAME[m.dine]}</span></li>
+      ${m.phone ? `<li><span class="b"></span><span>포인트 적립: ${phoneText(m.phone)} (연습용 번호)</span></li>` : ''}
+      <li><span class="b"></span><span>계산: ${PAY_NAME[m.pay]}</span></li>
+    </ul>
+    <div class="modeinfo">${practice
+      ? '<b>👆 연습 모드</b>주황색으로 반짝이는 곳과 손가락이 다음에 누를 곳을 알려줘요. 소리가 켜져 있으면 목소리로도 알려줘요.'
+      : '<b>⏱ 실전 모드</b>안내 없이 혼자 해봐요. ' + IDLE_LIMIT + '초 동안 아무것도 안 누르면 처음 화면으로 돌아갈 수 있어요. 막히면 "도움 받기"를 누르세요.'}</div>
+    <div class="acts">
+      <button class="btn" data-a="home">돌아가기</button>
+      <button class="btn pri big" data-a="go">시작하기 ▶</button>
+    </div>
+  </div></div>`;
+}
+
+function playHTML(){
+  const t = store().theme;
+  return `<div class="play">
+    <div class="kiosk" style="--kpri:${t.pri};--kpri2:${t.pri2};--kacc:${t.acc};--ksoft:${t.soft};--kbg:${t.bg}">
+      <div class="kscreen" id="kscreen">${kioskHTML()}</div>
+    </div>
+    ${panelHTML()}
+  </div>${S.started ? '' : introHTML()}`;
+}
+
+/* =========================================================
+   11. 화면 그리기 — 결과
+   ========================================================= */
+function resultHTML(){
+  const r = S.result, m = S.mission;
+  const idx = MISSIONS.findIndex(x => x.id === m.id);
+  const next = MISSIONS[idx + 1];
+  const rec = (S.db.records[m.id] || []).slice(-6).reverse();
+  let tip;
+  if (!r.ok) tip = '틀린 부분을 확인하고 다시 해 보세요. 연습 모드에서 손가락을 따라 해 보면 금방 익숙해져요.';
+  else if (r.misses === 0 && r.hints === 0) tip = '한 번도 헤매지 않았어요! 이제 실제 가게에서도 자신 있게 주문할 수 있어요.';
+  else if (S.mode === 'practice') tip = '연습 모드를 끝냈어요. 이번엔 도움 없이 "실전 도전"을 해 볼까요?';
+  else tip = '조금 헤맸지만 해냈어요. 한 번 더 하면 시간이 더 줄어들 거예요.';
+  return `<div class="result"><div class="rbox">
+    <div class="stars">${starStr(r.stars)}</div>
+    <h1>${r.ok ? '주문 성공! 🎉' : '아쉬워요, 주문이 조금 달라요'}</h1>
+    <p class="lead">${store().logo} ${m.title} · ${S.mode === 'practice' ? '연습 모드' : '실전 모드'}</p>
+    <div class="rstats">
+      <div><span>걸린 시간</span><b>${fmtTime(r.time)}</b></div>
+      <div><span>헤맨 횟수</span><b>${r.misses}번</b></div>
+      ${S.mode === 'real' ? `<div><span>도움 받기</span><b>${r.hints}번</b></div><div><span>시간 초과</span><b>${r.timeouts}번</b></div>` : ''}
+    </div>
+    ${r.errs.length ? `<div class="errs"><b>이런 점이 달랐어요</b><ul>${r.errs.map(e => `<li>${esc(e)}</li>`).join('')}</ul></div>` : ''}
+    <div class="tipbox">💬 ${tip}</div>
+    <div class="hist"><h3>이 미션의 최근 기록</h3>
+      <table><tr><th>날짜</th><th>모드</th><th>시간</th><th>헤맴</th><th>결과</th></tr>
+      ${rec.map(x => { const d = new Date(x.at); return `<tr><td>${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</td><td>${x.mode==='practice'?'연습':'실전'}</td><td>${fmtTime(x.time)}</td><td>${x.misses}</td><td>${x.ok ? '⭐'.repeat(x.stars) : '실패'}</td></tr>`; }).join('')}
+      </table>
+    </div>
+    <div class="racts">
+      <button class="btn" data-a="again">↺ 다시 하기</button>
+      ${S.mode === 'practice' ? `<button class="btn dark" data-a="play:${m.id}:real">⏱ 실전 도전</button>` : ''}
+      ${next && next.store === m.store ? `<button class="btn pri" data-a="play:${next.id}:practice">다음 미션 ▶</button>` : ''}
+      <button class="btn" data-a="home">🏠 메인 화면</button>
+    </div>
+  </div></div>`;
+}
+
+/* =========================================================
+   12. 렌더링과 손가락 위치
+   ========================================================= */
+function render(){
+  document.documentElement.style.setProperty('--scale', S.set.scale);
+  document.body.classList.toggle('big', S.set.scale >= 1.25);
+  const app = document.getElementById('app');
+  if (S.view === 'home'){ app.innerHTML = homeHTML(); return; }
+  if (S.view === 'result'){ app.innerHTML = resultHTML(); return; }
+
+  // play
+  const keep = {};
+  ['.k-grid','.k-cart-list','.k-body','.k-sheet'].forEach(sel => { const el = document.querySelector(sel); if (el) keep[sel] = el.scrollTop; });
+  const prevCat = render._cat, prevScreen = render._screen;
+  S._g = S.started && !S.finished ? guide() : null;
+  app.innerHTML = playHTML();
+  if (prevScreen === S.k.screen){
+    Object.entries(keep).forEach(([sel,v]) => {
+      if (sel === '.k-grid' && prevCat !== S.k.cat) return;
+      const el = document.querySelector(sel); if (el) el.scrollTop = v;
+    });
+  }
+  render._cat = S.k.cat; render._screen = S.k.screen;
+  showHighlight();
+
+  if (S._g && S.mode === 'practice' && S._g.msg !== S.lastSpoken){
+    S.lastSpoken = S._g.msg; speak(S._g.msg);
+  }
+}
+
+function showHighlight(){
+  const finger = document.getElementById('finger');
+  const g = S._g;
+  if (!finger) return;
+  if (!g || !g.id || !(S.mode === 'practice' || S.hintOn)){ finger.style.display = 'none'; return; }
+  const el = document.querySelector('#kscreen [data-id="' + g.id + '"]');
+  if (!el){ finger.style.display = 'none'; return; }
+  el.classList.add('hl');
+  // 스크롤 안쪽에 숨어 있으면 보이게 옮기기
+  const sc = el.closest('.k-grid, .k-cart-list, .k-body, .k-sheet');
+  if (sc){
+    const er = el.getBoundingClientRect(), sr = sc.getBoundingClientRect();
+    if (er.top < sr.top + 8) sc.scrollTop -= (sr.top - er.top) + 16;
+    else if (er.bottom > sr.bottom - 8) sc.scrollTop += (er.bottom - sr.bottom) + 16;
+  }
+  placeFinger();
+}
+
+function placeFinger(){
+  const finger = document.getElementById('finger');
+  const el = document.querySelector('#kscreen .hl');
+  const ks = document.getElementById('kscreen');
+  if (!finger || !el || !ks) return;
+  const kr = ks.getBoundingClientRect(), er = el.getBoundingClientRect();
+  const cx = Math.min(kr.width - 26, Math.max(26, er.left - kr.left + er.width / 2));
+  const top = er.top - kr.top;
+  finger.style.display = 'block';
+  finger.style.left = cx + 'px';
+  if (top > 70){ finger.textContent = '👇'; finger.className = 'finger down'; finger.style.top = (top - 52) + 'px'; }
+  else { finger.textContent = '👆'; finger.className = 'finger up'; finger.style.top = (er.bottom - kr.top + 4) + 'px'; }
+}
+document.addEventListener('scroll', () => { if (S.view === 'play') placeFinger(); }, true);
+window.addEventListener('resize', () => { if (S.view === 'play') placeFinger(); });
+
+/* =========================================================
+   13. 클릭 처리
+   ========================================================= */
+document.addEventListener('click', e => {
+  const kEl = e.target.closest('[data-k]');
+  if (kEl && S.view === 'play'){
+    if (S.started && !S.finished) onKiosk(kEl.dataset.id);
+    return;
+  }
+  const aEl = e.target.closest('[data-a]');
+  if (aEl) onApp(aEl.dataset.a);
+});
+
+function onKiosk(id){
+  if (S.k.screen === 'paying') return;
+  beep();
+  const g = S._g;
+  const wrong = !!(g && g.id && id !== g.id);
+  if (wrong) S.stats.misses++;
+  S.nudge = wrong && S.mode === 'practice';
+  S.hintOn = false;
+  S.idle = 0;
+  act(id);
+  render();
+}
+
+function onApp(a){
+  const p = a.split(':');
+  switch (p[0]){
+    case 'scale': S.set.scale = +p[1]; S.db.set = S.set; saveDB(); render(); break;
+    case 'sound': S.set.sound = p[1] === '1'; S.db.set = S.set; saveDB(); if (!S.set.sound) { try{speechSynthesis.cancel();}catch(e){} } render(); break;
+    case 'testvoice': if (!S.set.sound){ S.set.sound = true; S.db.set = S.set; saveDB(); render(); } speak('안녕하세요. 키오스크 연습실입니다. 천천히 따라 해 보세요.'); beep(); break;
+    case 'store': S.store = p[1]; render(); break;
+    case 'play': startMission(p[1], p[2]); break;
+    case 'go':
+      S.started = true; S.stats.start = Date.now(); S.idle = 0;
+      try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
+      render(); break;
+    case 'home':
+      try { speechSynthesis.cancel(); } catch(e){}
+      if (S.mission) S.store = S.mission.store;
+      S.view = 'home'; S.mission = null; S.k = null; render(); window.scrollTo(0,0); break;
+    case 'restart': case 'again': startMission(S.mission.id, S.mode); break;
+    case 'say': if (S._g) speak(S._g.msg); break;
+    case 'hint':
+      S.hintOn = true; S.stats.hints++; render();
+      if (S._g) speak(S._g.msg);
+      break;
+  }
+}
+
+/* =========================================================
+   14. 1초마다: 시간, 줄 선 손님, 시간 초과
+   ========================================================= */
+setInterval(() => {
+  if (S.view !== 'play' || !S.started || S.finished) return;
+  const sec = Math.floor((Date.now() - S.stats.start) / 1000);
+  const t = document.getElementById('tElapsed'); if (t) t.textContent = fmtTime(sec);
+  if (S.mode !== 'real') return;
+  const q = document.getElementById('queue'); if (q) q.innerHTML = queueHTML();
+  const k = S.k;
+  if (['start','paying','cardout','done'].includes(k.screen)){ S.idle = 0; return; }
+  if (k.popup && k.popup.type === 'timeout'){
+    k.popup.left--;
+    if (k.popup.left <= 0){
+      S.stats.timeouts++; S.hintOn = false;
+      resetKiosk(); kToast('시간이 지나서 처음 화면으로 돌아갔어요');
+    }
+    render(); return;
+  }
+  S.idle++;
+  if (S.idle >= IDLE_LIMIT){ k.popup = {type:'timeout', left:TIMEOUT_COUNT, prev:k.popup}; S.idle = 0; render(); }
+}, 1000);
+
+render();
+window.__kioskReady = true;
+</script>
+</body>
+</html>
